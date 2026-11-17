@@ -81,4 +81,30 @@ class Helper {
     public static function generateSecret(int $len = 32): string {
         return bin2hex(random_bytes($len));
     }
+
+    /**
+     * تبدیل subscription_url نسبی (/sub/xxx یا sub/xxx) به URL کامل با baseUrl پنل
+     * فاکسیما معمولاً subscription_url را مطلق برمی‌گرداند اما گاهی فقط مسیر می‌دهد؛
+     * اگر فقط مسیر باشد باید با آدرس پنل ترکیب شود تا لینک در تلگرام قابل کلیک باشد.
+     */
+    public static function normalizeSubscriptionUrl(string $url, string $baseUrl): string {
+        $url = trim($url);
+        if ($url === '') return '';
+        // اگر از قبل مطلق است
+        if (preg_match('#^https?://#i', $url)) return $url;
+        // اگر لینک تجمعی چندتایی با \n است (برخی پنل‌ها چند لینک برمی‌گردانند)، فقط اولین را نرمال نکن؛ کل رشته را برگردان اگر شامل :// باشد
+        if (strpos($url, '://') !== false) return $url;
+        $base = rtrim($baseUrl, '/');
+        if ($base === '') return $url;
+        // اگر فقط UUID/توکن باشد
+        if (!str_contains($url, '/')) {
+            return $base . '/sub/' . ltrim($url, '/');
+        }
+        // اگر با / شروع شود
+        if (str_starts_with($url, '/')) {
+            return $base . $url;
+        }
+        // حالت sub/xxx بدون اسلش اول
+        return $base . '/' . ltrim($url, '/');
+    }
 }

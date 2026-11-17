@@ -315,7 +315,8 @@ class PasarGuardPanel extends AbstractPanel {
             return ['success'=>false,'message'=> is_array($msg)?json_encode($msg, JSON_UNESCAPED_UNICODE):$msg,'subscription_url'=>'','uuid'=>''];
         }
         $j = json_decode($body, true);
-        $sub = $j['subscription_url'] ?? $j['sub_url'] ?? $j['link'] ?? ($this->baseUrl().'/sub/'.$username);
+        $rawSub = $j['subscription_url'] ?? $j['sub_url'] ?? $j['link'] ?? ($this->baseUrl().'/sub/'.$username);
+        $sub = \Core\Helper::normalizeSubscriptionUrl((string)$rawSub, $this->baseUrl());
         return ['success'=>true,'subscription_url'=>$sub,'uuid'=>$j['uuid']??'','message'=>'ok','raw'=>$j];
     }
 
@@ -325,12 +326,13 @@ class PasarGuardPanel extends AbstractPanel {
         if ($code <200 || $code>=300 || !empty($resp['error'])) return null;
         $j = json_decode($resp['body'] ?? '', true);
         if (!is_array($j)) return null;
+        $rawSub = $j['subscription_url'] ?? $j['sub_url'] ?? $j['link'] ?? '';
         return [
             'username'=>$j['username'] ?? $username,
             'data_limit'=>$j['data_limit'] ?? 0,
             'used_traffic'=>$j['used_traffic'] ?? $j['used'] ?? 0,
             'expire'=>$j['expire'] ?? 0,
-            'subscription_url'=>$j['subscription_url'] ?? '',
+            'subscription_url'=> $rawSub !== '' ? \Core\Helper::normalizeSubscriptionUrl((string)$rawSub, $this->baseUrl()) : '',
             'status'=>$j['status'] ?? 'active'
         ];
     }

@@ -63,7 +63,8 @@ class RebeccaPanel extends AbstractPanel {
             $res=$this->httpRequest('POST',$ep,$payload,$this->h());
             if($res['success']) {
                 $d=$res['data'];
-                return ['success'=>true,'subscription_url'=>$d['subscription_url']??$d['sub_url']??$this->baseUrl().'/sub/'.$username,'uuid'=>$d['uuid']??'','message'=>'ok'];
+                $raw=$d['subscription_url']??$d['sub_url']??$this->baseUrl().'/sub/'.$username;
+                return ['success'=>true,'subscription_url'=>\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()),'uuid'=>$d['uuid']??'','message'=>'ok'];
             }
         }
         return ['success'=>false,'message'=>$res['raw']??$res['error']??'خطا ریبکا','subscription_url'=>'','uuid'=>''];
@@ -76,7 +77,8 @@ class RebeccaPanel extends AbstractPanel {
             if(!$res['success']||empty($res['data'])) return null;
         }
         $d=$res['data'];
-        return ['username'=>$d['username'],'data_limit'=>$d['data_limit']??0,'used_traffic'=>$d['used_traffic']??0,'expire'=>$d['expire']??0,'subscription_url'=>$d['subscription_url']??'','status'=>$d['status']??'active'];
+        $raw=$d['subscription_url']??$d['sub_url']??'';
+        return ['username'=>$d['username'],'data_limit'=>$d['data_limit']??0,'used_traffic'=>$d['used_traffic']??0,'expire'=>$d['expire']??0,'subscription_url'=>$raw!==''?\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()):'','status'=>$d['status']??'active'];
     }
     public function renewUser(string $username,int $addDataBytes,int $addTimeSeconds,bool $reset=false): array {
         if(!$this->authenticate()) return ['success'=>false,'message'=>'auth failed'];

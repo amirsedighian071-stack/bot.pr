@@ -65,7 +65,8 @@ class RemnawavePanel extends AbstractPanel {
         $res=$this->httpRequest('POST','/api/users',$payload,$this->h());
         if($res['success']){
             $d=$res['data'];
-            return ['success'=>true,'subscription_url'=>$d['subscriptionUrl']??$this->baseUrl().'/sub/'.$username,'uuid'=>$d['id']??'','message'=>'ok'];
+            $raw=$d['subscriptionUrl']??$this->baseUrl().'/sub/'.$username;
+            return ['success'=>true,'subscription_url'=>\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()),'uuid'=>$d['id']??'','message'=>'ok'];
         }
         return ['success'=>false,'message'=>$res['raw']??$res['error']??'خطا رمناویو','subscription_url'=>'','uuid'=>''];
     }
@@ -75,7 +76,8 @@ class RemnawavePanel extends AbstractPanel {
         $res=$this->httpRequest('GET',"/api/users/{$username}",[],$this->h());
         if(!$res['success']||empty($res['data'])) return null;
         $d=$res['data'];
-        return ['username'=>$d['username'],'data_limit'=>$d['trafficLimit']??0,'used_traffic'=>$d['trafficUsed']??0,'expire'=>strtotime($d['expireAt']??'now'),'subscription_url'=>$d['subscriptionUrl']??'','status'=>$d['status']??'active'];
+        $raw=$d['subscriptionUrl']??'';
+        return ['username'=>$d['username'],'data_limit'=>$d['trafficLimit']??0,'used_traffic'=>$d['trafficUsed']??0,'expire'=>strtotime($d['expireAt']??'now'),'subscription_url'=>$raw!==''?\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()):'','status'=>$d['status']??'active'];
     }
     public function renewUser(string $username,int $addDataBytes,int $addTimeSeconds,bool $r=false): array {
         if(!$this->authenticate()) return ['success'=>false,'message'=>'auth failed'];
