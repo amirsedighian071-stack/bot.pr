@@ -467,14 +467,29 @@ class BotHandler {
         $this->tg->sendMessage($chatId,"🔍 در حال بررسی وضعیت پرداخت $orderId ...");
         $res = OrderService::verifyAndDeliver($orderId);
         if ($res['success']) {
-            $subUrl = $res['subscription_url'] ?? $res['delivery']['subscription_url'] ?? '';
+            $rawSub = $res['subscription_url'] ?? $res['delivery']['subscription_url'] ?? '';
+            // نرمال‌سازی لینک پرداخت نیز (در صورت مسیر نسبی)
+            $order = Database::fetchOne("SELECT * FROM orders WHERE order_id_unique=?", [$orderId]);
+            $panelBase = '';
+            if ($order && !empty($order['plan_id'])) {
+                $plan = Database::fetchOne("SELECT config_group_id FROM plans WHERE id=?", [$order['plan_id']]);
+                if ($plan) {
+                    $grp = Database::fetchOne("SELECT panel_id FROM config_groups WHERE id=?", [$plan['config_group_id']]);
+                    if ($grp) {
+                        $p = Database::fetchOne("SELECT url FROM panels WHERE id=?", [$grp['panel_id']]);
+                        $panelBase = $p['url'] ?? '';
+                    }
+                }
+            }
+            $subUrl = Helper::normalizeSubscriptionUrl((string)$rawSub, $panelBase);
+            if ($subUrl === '') $subUrl = (string)$rawSub;
             $txt = "✅ پرداخت تأیید و اشتراک تحویل شد!\n\n🔗 لینک اتصال:\n<code>$subUrl</code>\n\nبرای مشاهده QR به اشتراک من بروید.";
             $this->tg->sendMessage($chatId,$txt, Keyboards::mainMenu());
             // ارسال به پنل لاگ
             if ($subUrl) {
                 // QR via api.qrserver
-                $qr = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=".urlencode($subUrl);
-                $this->tg->sendPhoto($chatId,$qr,"📷 QR Code");
+                $qr = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=".urlencode($subUrl);
+                try { $this->tg->sendPhoto($chatId,$qr,"📷 بارکد اتصال — اسکن کنید"); } catch (\Throwable $e) { Helper::log("QR send failed checkPayment: ".$e->getMessage(),'bot.log'); }
             }
         } else {
             $this->tg->sendMessage($chatId,"❌ ".$res['message']."\n\nاگر پرداخت کرده‌اید اما تأیید نشده، از بخش «پرداخت کردم اما تأیید نشده» فیش ارسال کنید.", Keyboards::invoiceMenu($orderId, Database::fetchOne("SELECT invoice_url FROM orders WHERE order_id_unique=?",[$orderId])['invoice_url']??''));
@@ -509,16 +524,30 @@ class BotHandler {
         $driver = \Panels\PanelFactory::create($panelRow);
         $res = $driver->createUser($username, $bytes, $expire, $group['inbound_ids']?:$group['group_identifier']);
         if ($res['success']) {
+            // نرمال‌سازی لینک به URL مطلق — پنل گاهی فقط /sub/xxx برمی‌گرداند که در تلگرام غیرقابل کلیک است (باگ تصویر)
+            $panelBase = $panelRow['url'] ?? '';
+            $subUrl = Helper::normalizeSubscriptionUrl((string)($res['subscription_url'] ?? ''), $panelBase);
+            if ($subUrl === '') $subUrl = (string)($res['subscription_url'] ?? '');
             $user = Database::fetchOne("SELECT * FROM users WHERE telegram_id=?", [$this->fromId]);
             Database::query("INSERT INTO subscriptions (user_id, telegram_id, panel_id, config_group_id, username, uuid, subscription_url, data_limit_bytes, expire_at, status) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                [$user['id'],$this->fromId,$panelRow['id'],$group['id'],$username,$res['uuid']??'',$res['subscription_url'],$bytes,date('Y-m-d H:i:s',$expire),'active']);
+                [$user['id'],$this->fromId,$panelRow['id'],$group['id'],$username,$res['uuid']??'',$subUrl,$bytes,date('Y-m-d H:i:s',$expire),'active']);
             $subId = (int)Database::lastInsertId();
             Database::query("INSERT INTO free_trials (telegram_id, subscription_id) VALUES (?,?)", [$this->fromId,$subId]);
             Database::query("UPDATE users SET is_trial_used=1 WHERE telegram_id=?", [$this->fromId]);
+            $volText = $volMb >= 1024 ? round($volMb/1024, 2).' گیگ' : $volMb.' مگ';
             $tpl = Database::fetchOne("SELECT text_value FROM bot_texts WHERE text_key='trial_success'")['text_value'] ?? "تست فعال شد {username}";
-            $txt = str_replace(['{username}','{volume}','{expire}','{sub_url}'], [$username, $volMb/1024, $days, $res['subscription_url']], $tpl);
-            $txt = "✅ تست رایگان فعال شد!\n\n👤 $username\n📦 ".($volMb/1024)." گیگ\n⏳ $days روز\n\n🔗 لینک:\n<code>{$res['subscription_url']}</code>";
+            $txt = str_replace(['{username}','{volume}','{expire}','{sub_url}'], [$username, $volText, $days, $subUrl], $tpl);
+            $txt = "✅ تست رایگان فعال شد!\n\n👤 $username\n📦 $volText\n⏳ $days روز\n\n🔗 لینک:\n<code>$subUrl</code>";
             $this->tg->sendMessage($this->chatId,$txt,Keyboards::backToMain());
+            // ارسال بارکد QR همراه لینک — همانند بخش پرداخت
+            if ($subUrl !== '' && filter_var($subUrl, FILTER_VALIDATE_URL)) {
+                $qr = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=".urlencode($subUrl);
+                try {
+                    $this->tg->sendPhoto($this->chatId,$qr,"📷 بارکد اتصال — $username\nبرای اتصال، QR را در کلاینت (V2rayN / Hiddify / Streisand) اسکن کنید.");
+                } catch (\Throwable $e) {
+                    Helper::log("QR send failed for trial $username: ".$e->getMessage(), 'bot.log');
+                }
+            }
         } else {
             $this->tg->sendMessage($this->chatId,"❌ خطا ساخت تست: ".($res['message']??''),Keyboards::backToMain());
         }
@@ -534,18 +563,22 @@ class BotHandler {
     private function showSubDetail(int $subId, ?int $msgId): void {
         $sub = Database::fetchOne("SELECT * FROM subscriptions WHERE id=? AND telegram_id=?", [$subId,$this->fromId]);
         if (!$sub) { $this->tg->sendMessage($this->chatId,"❌ اشتراک یافت نشد"); return; }
-        // سعی دریافت اطلاعات زنده از پنل
+        // سعی دریافت اطلاعات زنده از پنل — نرمال‌سازی لینک (گاهی پنل مسیر نسبی برمی‌گرداند)
         $live = UnifiedPanelManager::getUserInfo($subId);
+        $panelForSub = Database::fetchOne("SELECT url FROM panels WHERE id=?", [$sub['panel_id']]);
+        $panelBaseForSub = $panelForSub['url'] ?? '';
         if ($live) {
             $used = Helper::formatBytes((int)($live['used_traffic']??0));
             $total = Helper::formatBytes((int)($live['data_limit']??$sub['data_limit_bytes']));
             $expire = isset($live['expire']) ? date('Y-m-d H:i', (int)$live['expire']) : $sub['expire_at'];
-            $subUrl = $live['subscription_url'] ?? $sub['subscription_url'];
+            $subUrl = Helper::normalizeSubscriptionUrl((string)($live['subscription_url'] ?? $sub['subscription_url']), $panelBaseForSub);
+            if ($subUrl === '') $subUrl = (string)($live['subscription_url'] ?? $sub['subscription_url']);
         } else {
             $used = Helper::formatBytes((int)$sub['used_traffic_bytes']);
             $total = Helper::formatBytes((int)$sub['data_limit_bytes']);
             $expire = $sub['expire_at'];
-            $subUrl = $sub['subscription_url'];
+            $subUrl = Helper::normalizeSubscriptionUrl((string)$sub['subscription_url'], $panelBaseForSub);
+            if ($subUrl === '') $subUrl = (string)$sub['subscription_url'];
         }
         $txt = "📦 اشتراک: {$sub['username']}\n📊 مصرف: $used / $total\n⏳ انقضا: $expire\n🔗 لینک:\n<code>$subUrl</code>";
         $kb = Keyboards::subscriptionDetailMenu($subId);
@@ -556,13 +589,19 @@ class BotHandler {
     private function sendSubLink(int $subId): void {
         $sub = Database::fetchOne("SELECT * FROM subscriptions WHERE id=? AND telegram_id=?", [$subId,$this->fromId]);
         if (!$sub) return;
-        $this->tg->sendMessage($this->chatId,"🔗 لینک اشتراک {$sub['username']}:\n\n<code>{$sub['subscription_url']}</code>");
+        $panelRow = Database::fetchOne("SELECT url FROM panels WHERE id=?", [$sub['panel_id']]);
+        $subUrl = Helper::normalizeSubscriptionUrl((string)$sub['subscription_url'], $panelRow['url'] ?? '');
+        if ($subUrl === '') $subUrl = (string)$sub['subscription_url'];
+        $this->tg->sendMessage($this->chatId,"🔗 لینک اشتراک {$sub['username']}:\n\n<code>$subUrl</code>");
     }
 
     private function sendQr(int $subId): void {
         $sub = Database::fetchOne("SELECT * FROM subscriptions WHERE id=? AND telegram_id=?", [$subId,$this->fromId]);
         if (!$sub) return;
-        $qr = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=".urlencode($sub['subscription_url']);
+        $panelRow = Database::fetchOne("SELECT url FROM panels WHERE id=?", [$sub['panel_id']]);
+        $subUrl = Helper::normalizeSubscriptionUrl((string)$sub['subscription_url'], $panelRow['url'] ?? '');
+        if ($subUrl === '') $subUrl = (string)$sub['subscription_url'];
+        $qr = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=".urlencode($subUrl);
         $this->tg->sendPhoto($this->chatId,$qr,"📷 QR برای {$sub['username']}");
     }
 

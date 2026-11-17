@@ -107,14 +107,16 @@ class MarzneshinPanel extends AbstractPanel {
         $res=$this->httpRequest('POST','/api/users',$payload,$this->h());
         if(!$res['success']) return ['success'=>false,'message'=>$res['raw']??$res['error'],'subscription_url'=>'','uuid'=>''];
         $d=$res['data'];
-        return ['success'=>true,'subscription_url'=>$d['subscription_url']??$this->baseUrl().'/sub/'.$username,'uuid'=>$d['uuid']??'','message'=>'ok'];
+        $raw=$d['subscription_url']??$this->baseUrl().'/sub/'.$username;
+        return ['success'=>true,'subscription_url'=>\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()),'uuid'=>$d['uuid']??'','message'=>'ok'];
     }
     public function getUser(string $username): ?array {
         if (!$this->authenticate()) return null;
         $res=$this->httpRequest('GET',"/api/users/{$username}",[],$this->h());
         if(!$res['success']||empty($res['data'])) return null;
         $d=$res['data'];
-        return ['username'=>$d['username'],'data_limit'=>$d['data_limit']??0,'used_traffic'=>$d['used_traffic']??0,'expire'=>$d['expire']??0,'subscription_url'=>$d['subscription_url']??'','status'=>$d['status']??'active'];
+        $raw=$d['subscription_url']??'';
+        return ['username'=>$d['username'],'data_limit'=>$d['data_limit']??0,'used_traffic'=>$d['used_traffic']??0,'expire'=>$d['expire']??0,'subscription_url'=>$raw!==''?\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()):'','status'=>$d['status']??'active'];
     }
     public function renewUser(string $username, int $addDataBytes, int $addTimeSeconds, bool $resetTraffic=false): array {
         $u=$this->getUser($username); if(!$u) return ['success'=>false,'message'=>'کاربر یافت نشد'];

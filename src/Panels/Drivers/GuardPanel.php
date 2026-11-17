@@ -35,10 +35,16 @@ class GuardPanel extends AbstractPanel {
     public function createUser(string $username,int $dataLimitBytes,int $expireTimestamp,$g=null): array {
         if(!$this->authenticate()) return ['success'=>false,'message'=>'کلید Guard خالی است','subscription_url'=>'','uuid'=>''];
         $res=$this->httpRequest('POST','/api/clients',['username'=>$username,'limit'=>$dataLimitBytes,'expire'=>$expireTimestamp],$this->h());
-        if($res['success']) return ['success'=>true,'subscription_url'=>$res['data']['url']??$this->baseUrl().'/sub/'.$username,'uuid'=>$res['data']['uuid']??'','message'=>'ok'];
+        if($res['success']) {
+            $raw=$res['data']['url']??$this->baseUrl().'/sub/'.$username;
+            return ['success'=>true,'subscription_url'=>\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()),'uuid'=>$res['data']['uuid']??'','message'=>'ok'];
+        }
         // فاکسیما Guard از /api/v1/users نیز استفاده می‌کند
         $res2=$this->httpRequest('POST','/api/v1/users',['username'=>$username,'data_limit'=>$dataLimitBytes,'expire'=>$expireTimestamp],$this->h());
-        if($res2['success']) return ['success'=>true,'subscription_url'=>$res2['data']['subscription_url']??$this->baseUrl().'/sub/'.$username,'uuid'=>$res2['data']['uuid']??'','message'=>'ok'];
+        if($res2['success']) {
+            $raw=$res2['data']['subscription_url']??$this->baseUrl().'/sub/'.$username;
+            return ['success'=>true,'subscription_url'=>\Core\Helper::normalizeSubscriptionUrl((string)$raw,$this->baseUrl()),'uuid'=>$res2['data']['uuid']??'','message'=>'ok'];
+        }
         return ['success'=>false,'message'=>$res['raw']??$res['error']??'خطا گارد','subscription_url'=>'','uuid'=>''];
     }
     public function getUser(string $username): ?array {
