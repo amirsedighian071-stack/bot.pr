@@ -1,8 +1,15 @@
 <?php
-$pageTitle='حجم‌های پیش‌فرض';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $id=(int)($_POST['id']??0);
     $label=trim($_POST['label']??'');
@@ -11,9 +18,12 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $active=isset($_POST['is_active'])?1:0;
     if($id) Database::query("UPDATE volumes SET label=?, gb=?, sort_order=?, is_active=? WHERE id=?",[$label,$gb,$order,$active,$id]);
     else Database::query("INSERT INTO volumes (label,gb,sort_order,is_active) VALUES (?,?,?,?)",[$label,$gb,$order,$active]);
-    Helper::redirect(Helper::appUrl('admin/volumes/index.php'));
+    $_SESSION['flash_success']='ذخیره شد'; Helper::redirect(Helper::appUrl('admin/volumes/index.php'));
 }
-if(isset($_GET['delete'])){ Database::query("DELETE FROM volumes WHERE id=?",[(int)$_GET['delete']]); Helper::redirect(Helper::appUrl('admin/volumes/index.php')); }
+if(isset($_GET['delete'])){ Database::query("DELETE FROM volumes WHERE id=?",[(int)$_GET['delete']]); $_SESSION['flash_success']='حذف شد'; Helper::redirect(Helper::appUrl('admin/volumes/index.php')); }
+
+$pageTitle='حجم‌های پیش‌فرض';
+require_once __DIR__ . '/../layout/header.php';
 $volumes=Database::fetchAll("SELECT * FROM volumes ORDER BY sort_order");
 $edit=null; if(isset($_GET['edit'])) $edit=Database::fetchOne("SELECT * FROM volumes WHERE id=?",[(int)$_GET['edit']]);
 ?>

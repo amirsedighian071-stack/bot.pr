@@ -1,11 +1,16 @@
 <?php
-$pageTitle='پنل‌های VPN';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
 use Core\Config;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
 
-// Handle add/edit
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $id = (int)($_POST['id']??0);
     $name = trim($_POST['name']??'');
@@ -17,12 +22,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $timeout = (int)($_POST['timeout']??10);
     $is_active = isset($_POST['is_active'])?1:0;
     $renew = $_POST['renew_method']??'append';
-
-    if ($id) {
-        Database::query("UPDATE panels SET name=?, type=?, url=?, username=?, password=?, token=?, timeout=?, is_active=?, renew_method=? WHERE id=?", [$name,$type,$url,$username,$password,$token,$timeout,$is_active,$renew,$id]);
+    if($id){
+        Database::query("UPDATE panels SET name=?, type=?, url=?, username=?, password=?, token=?, timeout=?, is_active=?, renew_method=? WHERE id=?",[$name,$type,$url,$username,$password,$token,$timeout,$is_active,$renew,$id]);
         Database::query("INSERT INTO audit_logs (admin_id, action, details) VALUES (?,?,?)", [$_SESSION['admin_id']??0,'edit_panel',"ویرایش پنل $name"]);
     } else {
-        Database::query("INSERT INTO panels (name,type,url,username,password,token,timeout,is_active,renew_method) VALUES (?,?,?,?,?,?,?,?,?)", [$name,$type,$url,$username,$password,$token,$timeout,$is_active,$renew]);
+        Database::query("INSERT INTO panels (name,type,url,username,password,token,timeout,is_active,renew_method) VALUES (?,?,?,?,?,?,?,?,?)",[$name,$type,$url,$username,$password,$token,$timeout,$is_active,$renew]);
         Database::query("INSERT INTO audit_logs (admin_id, action, details) VALUES (?,?,?)", [$_SESSION['admin_id']??0,'add_panel',"افزودن پنل $name"]);
     }
     $_SESSION['flash_success']='ذخیره شد';
@@ -71,6 +75,9 @@ if (isset($_GET['sync'])) {
     $_SESSION['flash_success'] = $res['message'];
     Helper::redirect(Helper::appUrl('admin/integrations/panels.php'));
 }
+
+$pageTitle='پنل‌های VPN';
+require_once __DIR__ . '/../layout/header.php';
 
 $panels = Database::fetchAll("SELECT * FROM panels ORDER BY id DESC");
 $edit = null;

@@ -1,8 +1,15 @@
 <?php
-$pageTitle='انبار کانفیگ دستی';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $group_id=(int)($_POST['config_group_id']??0);
     $configs=trim($_POST['configs']??'');
@@ -17,8 +24,11 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $_SESSION['flash_success']="$count کانفیگ به انبار اضافه شد";
     Helper::redirect(Helper::appUrl('admin/warehouse/index.php'));
 }
-if(isset($_GET['delete'])){ Database::query("DELETE FROM warehouse_configs WHERE id=?",[(int)$_GET['delete']]); Helper::redirect(Helper::appUrl('admin/warehouse/index.php')); }
-if(isset($_GET['clear_used'])){ Database::query("DELETE FROM warehouse_configs WHERE is_used=1"); Helper::redirect(Helper::appUrl('admin/warehouse/index.php')); }
+if(isset($_GET['delete'])){ Database::query("DELETE FROM warehouse_configs WHERE id=?",[(int)$_GET['delete']]); $_SESSION['flash_success']='حذف شد'; Helper::redirect(Helper::appUrl('admin/warehouse/index.php')); }
+if(isset($_GET['clear_used'])){ Database::query("DELETE FROM warehouse_configs WHERE is_used=1"); $_SESSION['flash_success']='موارد استفاده‌شده حذف شد'; Helper::redirect(Helper::appUrl('admin/warehouse/index.php')); }
+
+$pageTitle='انبار کانفیگ دستی';
+require_once __DIR__ . '/../layout/header.php';
 $groups=Database::fetchAll("SELECT g.*, p.name as panel_name FROM config_groups g LEFT JOIN panels p ON p.id=g.panel_id WHERE p.type='manual' OR g.id IN (SELECT config_group_id FROM warehouse_configs) ORDER BY g.id DESC");
 if(empty($groups)) $groups=Database::fetchAll("SELECT g.*, p.name as panel_name FROM config_groups g LEFT JOIN panels p ON p.id=g.panel_id ORDER BY g.id DESC LIMIT 20");
 $stocks=Database::fetchAll("SELECT w.*, g.name as group_name FROM warehouse_configs w LEFT JOIN config_groups g ON g.id=w.config_group_id ORDER BY w.id DESC LIMIT 100");

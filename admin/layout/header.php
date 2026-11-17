@@ -38,6 +38,7 @@ $appUrl = Helper::appUrl('');
     <h5 class="m-0 fw-bold"><i class="bi bi-shield-check me-1 text-primary"></i>پنل هوشمند فروش و مدیریت VPN<?= isset($pageTitle) && $pageTitle !== 'داشبورد' ? ' <span class="text-muted fw-normal small">| ' . htmlspecialchars($pageTitle) . '</span>' : '' ?></h5>
   </div>
   <div class="d-flex align-items-center gap-3">
+    <button id="themeToggle" class="btn btn-sm btn-outline-light" title="تغییر تم" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="bi bi-moon-stars" id="themeIcon"></i></button>
     <span class="small text-muted d-none d-md-inline"><?= $admin['username'] ?? '' ?> (<?= $admin['role'] ?? '' ?>)</span>
     <a href="<?= Helper::appUrl('admin/logout.php') ?>" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-left"></i> خروج</a>
   </div>

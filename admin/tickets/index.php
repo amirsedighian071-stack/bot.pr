@@ -1,10 +1,20 @@
 <?php
-$pageTitle='تیکت‌ها';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
-if(isset($_GET['close'])){ Database::query("UPDATE tickets SET status='closed' WHERE id=?",[(int)$_GET['close']]); Helper::redirect(Helper::appUrl('admin/tickets/index.php')); }
-if(isset($_GET['open'])){ Database::query("UPDATE tickets SET status='open' WHERE id=?",[(int)$_GET['open']]); Helper::redirect(Helper::appUrl('admin/tickets/index.php')); }
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
+if(isset($_GET['close'])){ Database::query("UPDATE tickets SET status='closed' WHERE id=?",[(int)$_GET['close']]); $_SESSION['flash_success']='تیکت بسته شد'; Helper::redirect(Helper::appUrl('admin/tickets/index.php')); }
+if(isset($_GET['open'])){ Database::query("UPDATE tickets SET status='open' WHERE id=?",[(int)$_GET['open']]); $_SESSION['flash_success']='تیکت باز شد'; Helper::redirect(Helper::appUrl('admin/tickets/index.php')); }
+
+$pageTitle='تیکت‌ها';
+require_once __DIR__ . '/../layout/header.php';
 $status=$_GET['status']??'';
 $where=$status ? "WHERE t.status='$status'":'';
 $tickets=Database::fetchAll("SELECT t.*, u.username, u.first_name FROM tickets t LEFT JOIN users u ON u.telegram_id=t.telegram_id $where ORDER BY t.updated_at DESC LIMIT 100");

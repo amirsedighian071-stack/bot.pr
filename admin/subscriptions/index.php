@@ -1,16 +1,29 @@
 <?php
-$pageTitle='اشتراک‌ها';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
-if(isset($_GET['delete'])){ Database::query("DELETE FROM subscriptions WHERE id=?",[(int)$_GET['delete']]); Helper::redirect(Helper::appUrl('admin/subscriptions/index.php')); }
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
+if(isset($_GET['delete'])){ Database::query("DELETE FROM subscriptions WHERE id=?",[(int)$_GET['delete']]); $_SESSION['flash_success']='حذف شد'; Helper::redirect(Helper::appUrl('admin/subscriptions/index.php')); }
 if(isset($_GET['toggle'])){
     $id=(int)$_GET['toggle'];
     $s=Database::fetchOne("SELECT status FROM subscriptions WHERE id=?",[$id]);
-    $new=$s['status']==='active'?'disabled':'active';
-    Database::query("UPDATE subscriptions SET status=? WHERE id=?",[$new,$id]);
+    if($s){
+        $new=$s['status']==='active'?'disabled':'active';
+        Database::query("UPDATE subscriptions SET status=? WHERE id=?",[$new,$id]);
+        $_SESSION['flash_success']='وضعیت تغییر کرد';
+    }
     Helper::redirect(Helper::appUrl('admin/subscriptions/index.php'));
 }
+
+$pageTitle='اشتراک‌ها';
+require_once __DIR__ . '/../layout/header.php';
 $q=$_GET['q']??'';
 $where=$q ? "WHERE s.username LIKE '%$q%' OR s.telegram_id LIKE '%$q%'" : '';
 $subs=Database::fetchAll("SELECT s.*, p.name as panel_name FROM subscriptions s LEFT JOIN panels p ON p.id=s.panel_id $where ORDER BY s.id DESC LIMIT 100");

@@ -1,11 +1,19 @@
 <?php
-$pageTitle='کاربران';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
 if(isset($_GET['toggle_block'])){
     $id=(int)$_GET['toggle_block'];
     Database::query("UPDATE users SET is_blocked=1-is_blocked WHERE id=?",[$id]);
+    $_SESSION['flash_success']='وضعیت کاربر تغییر کرد';
     Helper::redirect(Helper::appUrl('admin/users/index.php'));
 }
 if(isset($_POST['add_token'])){
@@ -18,9 +26,12 @@ if(isset($_POST['add_token'])){
         Database::query("UPDATE users SET tokens=? WHERE telegram_id=?",[$new,$tid]);
         Database::query("INSERT INTO token_transactions (user_id,telegram_id,amount,type,reason,balance_after) VALUES (?,?,?,?,?,?)",[$u['id'],$tid,$amount,'admin_adjust',$reason,$new]);
         $_SESSION['flash_success']='توکن تغییر کرد';
-    }
+    } else $_SESSION['flash_error']='کاربر یافت نشد';
     Helper::redirect(Helper::appUrl('admin/users/index.php'));
 }
+
+$pageTitle='کاربران';
+require_once __DIR__ . '/../layout/header.php';
 $q=$_GET['q']??'';
 $where=$q ? "WHERE telegram_id LIKE '%$q%' OR username LIKE '%$q%'":'';
 $users=Database::fetchAll("SELECT * FROM users $where ORDER BY id DESC LIMIT 100");

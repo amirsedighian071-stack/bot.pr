@@ -5,30 +5,45 @@ use Core\Database;
 
 class Keyboards {
     public static function mainMenu(): array {
-        // از DB بخوان اگر موجود باشد، در غیر این صورت پیش‌فرض spec
+        // چیدمان استاندارد 5 ردیفه - بدون تکرار ستونی
+        $fallback = [
+            [Telegram::btn('خرید اشتراک','buy')],
+            [Telegram::btn('تست رایگان','trial')],
+            [Telegram::btn('حساب کاربری','account'), Telegram::btn('اشتراک من','my_subs')],
+            [Telegram::btn('پشتیبانی','support'), Telegram::btn('آموزش','education')],
+            [Telegram::btn('زیرمجموعه‌گیری','referral')],
+        ];
         try {
-            $rows = Database::fetchAll("SELECT * FROM bot_menus WHERE is_active=1 ORDER BY row_num, col_num");
-            if ($rows) {
+            $rows = Database::fetchAll("SELECT * FROM bot_menus WHERE is_active=1 ORDER BY row_num ASC, col_num ASC");
+            if ($rows && count($rows) >= 5) {
                 $grouped = [];
-                foreach ($rows as $r) $grouped[$r['row_num']][] = $r;
-                ksort($grouped);
-                $kb = [];
-                foreach ($grouped as $row) {
-                    $line=[];
-                    foreach ($row as $btn) $line[] = Telegram::btn(($btn['emoji']? $btn['emoji'].' ':'').$btn['label'], $btn['callback_data']);
-                    $kb[]=$line;
+                foreach ($rows as $r) {
+                    $rn = (int)($r['row_num'] ?? 0);
+                    if($rn < 1) continue;
+                    $grouped[$rn][] = $r;
                 }
-                return Telegram::inlineKeyboard($kb);
+                if(count($grouped) === 5){
+                    ksort($grouped);
+                    $kb = [];
+                    foreach ($grouped as $row) {
+                        usort($row, fn($a,$b)=> (int)$a['col_num'] <=> (int)$b['col_num']);
+                        $line=[];
+                        foreach ($row as $btn) {
+                            if(empty($btn['label']) || empty($btn['callback_data'])) continue;
+                            $label = trim($btn['label']);
+                            // حذف ایموجی اضافی اگر در DB مانده باشد، فقط متن تمیز
+                            $line[] = Telegram::btn($label, $btn['callback_data']);
+                        }
+                        if($line) $kb[]=$line;
+                    }
+                    // اعتبارسنجی: باید دقیقا 5 ردیف با ساختار 1-1-2-2-1 باشد
+                    if(count($kb)===5 && count($kb[0])===1 && count($kb[1])===1 && count($kb[2])===2 && count($kb[3])===2 && count($kb[4])===1){
+                        return Telegram::inlineKeyboard($kb);
+                    }
+                }
             }
-        } catch (\Exception $e) {}
-        // fallback دقیق spec
-        return Telegram::inlineKeyboard([
-            [Telegram::btn('🛒 خرید اشتراک','buy')],
-            [Telegram::btn('🎁 تست رایگان','trial')],
-            [Telegram::btn('👤 حساب کاربری','account'), Telegram::btn('📦 اشتراک من','my_subs')],
-            [Telegram::btn('🛟 پشتیبانی','support'), Telegram::btn('📚 آموزش','education')],
-            [Telegram::btn('👥 زیرمجموعه‌گیری','referral')],
-        ]);
+        } catch (\Throwable $e) {}
+        return Telegram::inlineKeyboard($fallback);
     }
 
     public static function backToMain(): array {
