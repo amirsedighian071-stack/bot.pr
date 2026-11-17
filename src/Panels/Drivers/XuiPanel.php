@@ -124,6 +124,18 @@ class XuiPanel extends AbstractPanel {
         }
         return [['id'=>1,'name'=>'Inbound #1','type'=>'inbound']];
     }
-    public function testConnection(): array { return $this->authenticate()?['success'=>true,'message'=>'X-UI متصل شد']:['success'=>false,'message'=>'خطا XUI']; }
+    public function testConnection(): array {
+        if (!$this->authenticate()) return ['success'=>false,'message'=>'احراز هویت X-UI ناموفق - نام کاربری/رمز اشتباه'];
+        // تست واقعی مانند فاکسیما: GET /panel/api/inbounds/list
+        $res=$this->xuiRequest('/panel/api/inbounds/list','', 'GET');
+        if($res['success']) return ['success'=>true,'message'=>'X-UI متصل شد'];
+        // fallback به /xui/inbounds
+        $res2=$this->httpRequest('GET','/panel/api/inbounds/list',[],[],0,false);
+        if($res2['success']) return ['success'=>true,'message'=>'X-UI متصل شد'];
+        $code=(int)($res['code']??0);
+        $msg=$res['error']??$res['raw']??"HTTP $code";
+        if($code==401) $msg='احراز هویت X-UI ناموفق (401)';
+        return ['success'=>false,'message'=>$msg];
+    }
     private function generateUuid(): string { return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0,0xffff), mt_rand(0,0xffff), mt_rand(0,0xffff), mt_rand(0,0x0fff)|0x4000, mt_rand(0,0x3fff)|0x8000, mt_rand(0,0xffff), mt_rand(0,0xffff), mt_rand(0,0xffff)); }
 }
