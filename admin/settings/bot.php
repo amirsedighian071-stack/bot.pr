@@ -1,34 +1,34 @@
 <?php
-$pageTitle='تنظیمات ربات و وب‌هوک';
-require_once __DIR__ . '/../layout/header.php';
+// پردازش تنظیم وب‌هوک قبل از هر خروجی برای جلوگیری از headers already sent
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Config;
 use Core\Helper;
 use Core\Telegram;
+use Core\Auth;
 
-$botToken = Config::setting('bot_token','');
-$adminId = Config::setting('admin_telegram_id','');
-$webhookUrl = Config::setting('webhook_url', Helper::appUrl('public/webhook.php'));
+Auth::startSession();
+if (!Auth::check() && basename($_SERVER['PHP_SELF']) !== 'login.php') {
+    Helper::redirect(Helper::appUrl('admin/login.php'));
+}
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $token = trim($_POST['bot_token']??'');
     $admin = trim($_POST['admin_telegram_id']??'');
-    // ولیدیشن ساده
     if(empty($token) || empty($admin)){
         $_SESSION['flash_error']='لطفا توکن ربات و آیدی ادمین را کامل وارد کنید';
         Helper::redirect(Helper::appUrl('admin/settings/bot.php'));
     }
-    // ذخیره
     Config::setSetting('bot_token',$token);
     Config::setSetting('admin_telegram_id',$admin);
-    // Secret خودکار (اگر نبود بساز)
     $secret = Config::setting('webhook_secret','');
     if(empty($secret)) $secret = bin2hex(random_bytes(16));
     Config::setSetting('webhook_secret',$secret);
-    // آدرس وب‌هوک به صورت خودکار از دامنه فعلی تشخیص داده می‌شود
-    // تشخیص پروتکل + هاست + مسیر
     $autoWebhook = Helper::appUrl('public/webhook.php');
-    // اگر تنظیمات app.url خالی باشد، از هدر فعلی تشخیص بده
     if(strpos($autoWebhook,'yourdomain')!==false){
         $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off') ? 'https' : 'https';
         $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
@@ -39,13 +39,10 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
     Config::setSetting('webhook_url',$autoWebhook);
     $webhookUrl = $autoWebhook;
-
-    // ارسال خودکار setWebhook به تلگرام
     try{
         $tg = new Telegram($token);
         $res = $tg->setWebhook($webhookUrl, $secret);
         if($res && ($res['ok']??false)){
-            // تست getMe برای ذخیره یوزرنیم
             try{ $me = $tg->request('getMe'); if($me && ($me['ok']??false)) Config::setSetting('bot_username',$me['result']['username']??''); }catch(\Throwable $e){}
             $_SESSION['flash_success']='وب‌هوک با موفقیت تنظیم شد';
             $_SESSION['flash_modal']='success';
@@ -60,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
     Helper::redirect(Helper::appUrl('admin/settings/bot.php'));
 }
+
+$pageTitle='تنظیمات ربات و وب‌هوک';
+require_once __DIR__ . '/../layout/header.php';
 
 $botToken = Config::setting('bot_token','');
 $adminId = Config::setting('admin_telegram_id','');
@@ -146,7 +146,6 @@ $autoDetected = Helper::appUrl('public/webhook.php');
 <?php include __DIR__ . '/../layout/creator_card.php'; ?>
 <?php require_once __DIR__ . '/../layout/footer.php'; ?>
 <script>
-// نمایش مودال اختصاصی به جای alert برای نتیجه وب‌هوک
 document.addEventListener('DOMContentLoaded',()=>{
   <?php if(!empty($_SESSION['flash_modal'])): ?>
     setTimeout(()=>{
@@ -157,7 +156,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     },400);
     <?php unset($_SESSION['flash_modal'],$_SESSION['flash_modal_msg']); ?>
   <?php endif; ?>
-  // confirm حذف
   document.querySelector('[data-confirm-action="deleteWebhook"]')?.addEventListener('click',()=>{
     showConfirm('حذف وب‌هوک','آیا از حذف وب‌هوک اطمینان دارید؟ این عمل اتصال ربات را قطع می‌کند.',()=>{
       document.getElementById('deleteWebhookForm').submit();

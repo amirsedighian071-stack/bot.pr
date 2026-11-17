@@ -66,7 +66,15 @@ class Helper {
     }
 
     public static function redirect(string $url): void {
-        header("Location: $url");
+        // پاکسازی بافر برای جلوگیری از headers already sent
+        if (ob_get_length()) ob_end_clean();
+        if (!headers_sent()) {
+            header("Location: $url");
+        } else {
+            // fallback با JS اگر هدر قبلا ارسال شده
+            echo '<script>location.href='.json_encode($url, JSON_UNESCAPED_UNICODE).';</script>';
+            echo '<noscript><meta http-equiv="refresh" content="0;url='.htmlspecialchars($url).'"></noscript>';
+        }
         exit;
     }
 
