@@ -5,26 +5,40 @@ use Core\Cache;
 
 class PasarGuardPanel extends AbstractPanel {
     public function authenticate(): bool {
-        // PasarGuard uses token/API key directly
-        if (!empty($this->config['token'])) {
-            $this->cachedToken = $this->config['token'];
+        if ($this->authenticating) return false;
+        $this->authenticating = true;
+        try {
+            // اگر توکن مستقیم در کانفیگ باشد نیاز به لاگین نیست
+            if (!empty($this->config['token'])) {
+                $this->cachedToken = $this->config['token'];
+                Cache::set($this->cacheKey('token'), $this->cachedToken, 3600*6);
+                return true;
+            }
+            // بررسی کش قبل از درخواست شبکه
+            $cached = Cache::get($this->cacheKey('token'));
+            if ($cached) { $this->cachedToken = $cached; return true; }
+            if ($this->cachedToken) return true;
+
+            // لاگین بدون تلاش مجدد توکن (withAuth=false) برای جلوگیری از بازگشت
+            $res = $this->httpRequest('POST', '/api/auth/login', [
+                'username'=>$this->config['username'],
+                'password'=>$this->config['password']
+            ], [], 0, false);
+            if (!$res['success'] || empty($res['data']['token'])) return false;
+            $this->cachedToken = $res['data']['token'];
+            Cache::set($this->cacheKey('token'), $this->cachedToken, 3600*6);
             return true;
+        } finally {
+            $this->authenticating = false;
         }
-        // Try login to get token
-        $res = $this->httpRequest('POST', '/api/auth/login', [
-            'username'=>$this->config['username'],
-            'password'=>$this->config['password']
-        ]);
-        if (!$res['success'] || empty($res['data']['token'])) return false;
-        $this->cachedToken = $res['data']['token'];
-        Cache::set($this->cacheKey('token'), $this->cachedToken, 3600*6);
-        return true;
     }
 
     public function getToken(): ?string {
         if ($this->cachedToken) return $this->cachedToken;
+        // کش را بدون فراخوانی authenticate چک کن
         $cached = Cache::get($this->cacheKey('token'));
         if ($cached) { $this->cachedToken=$cached; return $cached; }
+        if ($this->authenticating) return null;
         $this->authenticate();
         return $this->cachedToken;
     }
@@ -35,7 +49,7 @@ class PasarGuardPanel extends AbstractPanel {
     }
 
     public function createUser(string $username, int $dataLimitBytes, int $expireTimestamp, $groupOrInboundIds = null): array {
-        $this->authenticate();
+        if (!$this->authenticate()) return ['success'=>false,'message'=>'احراز هویت پاسارگاد ناموفق','subscription_url'=>'','uuid'=>''];
         $payload = [
             'username'=>$username,
             'data_limit'=>$dataLimitBytes,
@@ -43,7 +57,6 @@ class PasarGuardPanel extends AbstractPanel {
             'group_id'=> $groupOrInboundIds ?: null,
             'status'=>'active'
         ];
-        // Try common PasarGuard endpoints
         $endpoints = ['/api/users', '/api/user', '/api/clients'];
         foreach ($endpoints as $ep) {
             $res = $this->httpRequest('POST', $ep, $payload, $this->headers());
@@ -57,7 +70,7 @@ class PasarGuardPanel extends AbstractPanel {
     }
 
     public function getUser(string $username): ?array {
-        $this->authenticate();
+        if (!$this->authenticate()) return null;
         foreach (['/api/users/'.$username, '/api/user/'.$username] as $ep) {
             $res = $this->httpRequest('GET', $ep, [], $this->headers());
             if ($res['success'] && !empty($res['data'])) {
@@ -86,18 +99,19 @@ class PasarGuardPanel extends AbstractPanel {
     }
 
     public function deleteUser(string $username): bool {
-        $this->authenticate();
+        if (!$this->authenticate()) return false;
         $res = $this->httpRequest('DELETE', "/api/users/{$username}", [], $this->headers());
         return $res['success'];
     }
 
     public function toggleUserStatus(string $username, bool $active): bool {
+        if (!$this->authenticate()) return false;
         $res = $this->httpRequest('PUT', "/api/users/{$username}", ['status'=>$active?'active':'disabled'], $this->headers());
         return $res['success'];
     }
 
     public function getGroupsOrInbounds(): array {
-        $this->authenticate();
+        if (!$this->authenticate()) return [['id'=>'default','name'=>'Default Group','type'=>'group']];
         foreach (['/api/groups','/api/services','/api/inbounds'] as $ep) {
             $res = $this->httpRequest('GET', $ep, [], $this->headers());
             if ($res['success'] && is_array($res['data'])) {
