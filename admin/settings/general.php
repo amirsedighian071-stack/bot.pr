@@ -13,7 +13,7 @@ Auth::startSession();
 if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
-    $fields = ['fee_amount','trial_volume_mb','trial_days','trial_daily_limit','token_per_invite','gift_5gb_tokens','gift_10gb_tokens','gift_cash_tokens','support_channel_link','education_link','app_download_link','faq_text','welcome_text','payment_before_text','payment_caption','referral_banner','bot_username'];
+    $fields = ['fee_amount','trial_volume_mb','trial_days','trial_daily_limit','trial_group_id','token_per_invite','gift_5gb_tokens','gift_10gb_tokens','gift_cash_tokens','support_channel_link','education_link','app_download_link','faq_text','welcome_text','payment_before_text','payment_caption','referral_banner','bot_username'];
     foreach($fields as $k){
         if(isset($_POST[$k])) Config::setSetting($k, trim($_POST[$k]));
     }
@@ -107,6 +107,20 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
         <div class="col-6"><label class="form-label">حجم تست (MB)</label><input name="trial_volume_mb" class="form-control" value="<?= $settings['trial_volume_mb']??100 ?>"></div>
         <div class="col-6"><label class="form-label">روز تست</label><input name="trial_days" class="form-control" value="<?= $settings['trial_days']??1 ?>"></div>
         <div class="col-6"><label class="form-label">سقف تست روزانه</label><input name="trial_daily_limit" class="form-control" value="<?= $settings['trial_daily_limit']??0 ?>" placeholder="0=نامحدود"></div>
+        <div class="col-12">
+          <label class="form-label">گروه پیش‌فرض تست رایگان (برای جلوگیری از AVANET 0)</label>
+          <?php
+          $allGroups = Database::fetchAll("SELECT g.*, p.name as panel_name FROM config_groups g LEFT JOIN panels p ON p.id=g.panel_id ORDER BY g.id");
+          $trialGid = $settings['trial_group_id']??'';
+          ?>
+          <select name="trial_group_id" class="form-select">
+            <option value="">— پیش‌فرض: اولین گروه فعال —</option>
+            <?php foreach($allGroups as $ag): ?>
+            <option value="<?= $ag['id'] ?>" <?= $trialGid==$ag['id']?'selected':'' ?>><?= Helper::escapeHtml($ag['name']) ?> (<?= Helper::escapeHtml($ag['panel_name']??'') ?> — <?= $ag['inbound_ids']?:$ag['group_identifier']?:'بدون Group ID!' ?>)</option>
+            <?php endforeach; ?>
+          </select>
+          <small class="text-muted">این گروه هنگام تست رایگان به پنل ارسال می‌شود. باید دقیقاً گروهی باشد که در پنل (مثل Ava test) ID دارد، وگرنه سابسکرایب خالی می‌ماند. اگر خالی بگذارید، اولین گروه فعال استفاده می‌شود.</small>
+        </div>
         <div class="col-6"><label class="form-label">توکن هر دعوت</label><input name="token_per_invite" class="form-control" value="<?= $settings['token_per_invite']??1 ?>"></div>
         <div class="col-4"><label class="form-label">5GB توکن</label><input name="gift_5gb_tokens" class="form-control" value="<?= $settings['gift_5gb_tokens']??4 ?>"></div>
         <div class="col-4"><label class="form-label">10GB توکن</label><input name="gift_10gb_tokens" class="form-control" value="<?= $settings['gift_10gb_tokens']??7 ?>"></div>

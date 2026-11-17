@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS `plans` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `service_id` INT UNSIGNED NOT NULL,
   `config_group_id` INT UNSIGNED NOT NULL,
+  `group_ids` VARCHAR(255) NULL COMMENT 'Override panel group_ids for this plan (e.g. Ava test id) - if empty uses config_groups inbound_ids',
   `name` VARCHAR(100) NOT NULL,
   `price` INT NOT NULL COMMENT 'price in Toman',
   `price_per_gb` INT DEFAULT 0 COMMENT 'for custom volume',
