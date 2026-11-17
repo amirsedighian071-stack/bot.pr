@@ -19,14 +19,36 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $username = trim($_POST['username']??'');
     $password = trim($_POST['password']??'');
     $token = trim($_POST['token']??'');
+    $proxies = trim($_POST['proxies']??'');
+    $inbounds = trim($_POST['inbounds']??'');
+    $pasarguard_auth_mode = $_POST['pasarguard_auth_mode']??'api_key';
+    // اعتبارسنجی proxies: باید JSON معتبر یا خالی باشد؛ اگر "Input" یا رشته نامعتبر بود، خالی ذخیره می‌شود تا fallback به {} بخورد
+    if ($proxies !== '' && strtolower($proxies) !== 'null') {
+        $dec = json_decode($proxies, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($dec)) {
+            // اگر کاربر آرایه ساده یا "Input" وارد کرده، خالی کن تا خطای proxy_settings ندهد
+            if (strtolower($proxies) === 'input' || $proxies === '[]' ) $proxies = '';
+            else {
+                // نگه دار ولی لاگ کن - در Driver به object تبدیل می‌شود
+            }
+        }
+    }
+    // اطمینان از وجود ستون‌های جدید در نصب‌های قدیمی (migration درجا)
+    try {
+        Database::query("SELECT proxies FROM panels LIMIT 1");
+    } catch (\Throwable $e) {
+        try { Database::query("ALTER TABLE panels ADD COLUMN proxies TEXT NULL COMMENT 'JSON proxy_settings'"); } catch (\Throwable $e2) {}
+        try { Database::query("ALTER TABLE panels ADD COLUMN inbounds TEXT NULL COMMENT 'JSON group_ids'"); } catch (\Throwable $e2) {}
+        try { Database::query("ALTER TABLE panels ADD COLUMN pasarguard_auth_mode VARCHAR(20) DEFAULT 'api_key'"); } catch (\Throwable $e2) {}
+    }
     $timeout = (int)($_POST['timeout']??10);
     $is_active = isset($_POST['is_active'])?1:0;
     $renew = $_POST['renew_method']??'append';
     if($id){
-        Database::query("UPDATE panels SET name=?, type=?, url=?, username=?, password=?, token=?, timeout=?, is_active=?, renew_method=? WHERE id=?",[$name,$type,$url,$username,$password,$token,$timeout,$is_active,$renew,$id]);
+        Database::query("UPDATE panels SET name=?, type=?, url=?, username=?, password=?, token=?, proxies=?, inbounds=?, pasarguard_auth_mode=?, timeout=?, is_active=?, renew_method=? WHERE id=?",[$name,$type,$url,$username,$password,$token,$proxies?:null,$inbounds?:null,$pasarguard_auth_mode,$timeout,$is_active,$renew,$id]);
         Database::query("INSERT INTO audit_logs (admin_id, action, details) VALUES (?,?,?)", [$_SESSION['admin_id']??0,'edit_panel',"ویرایش پنل $name"]);
     } else {
-        Database::query("INSERT INTO panels (name,type,url,username,password,token,timeout,is_active,renew_method) VALUES (?,?,?,?,?,?,?,?,?)",[$name,$type,$url,$username,$password,$token,$timeout,$is_active,$renew]);
+        Database::query("INSERT INTO panels (name,type,url,username,password,token,proxies,inbounds,pasarguard_auth_mode,timeout,is_active,renew_method) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",[$name,$type,$url,$username,$password,$token,$proxies?:null,$inbounds?:null,$pasarguard_auth_mode,$timeout,$is_active,$renew]);
         Database::query("INSERT INTO audit_logs (admin_id, action, details) VALUES (?,?,?)", [$_SESSION['admin_id']??0,'add_panel',"افزودن پنل $name"]);
     }
     $_SESSION['flash_success']='ذخیره شد';
@@ -101,7 +123,10 @@ if (isset($_GET['edit'])) $edit = Database::fetchOne("SELECT * FROM panels WHERE
       <div class="col-md-3"><label class="form-label">رمز عبور</label><input name="password" class="form-control" value="<?= Helper::escapeHtml($edit['password']??'') ?>"></div>
       <div class="col-md-3"><label class="form-label">توکن/API Key (اختیاری)</label><input name="token" class="form-control" value="<?= Helper::escapeHtml($edit['token']??'') ?>"></div>
       <div class="col-md-1"><label class="form-label">Timeout</label><input name="timeout" type="number" class="form-control" value="<?= $edit['timeout']??10 ?>"></div>
+      <div class="col-md-2"><label class="form-label">احراز پاسارگاد</label><select name="pasarguard_auth_mode" class="form-select"><option value="api_key" <?= ($edit['pasarguard_auth_mode']??'api_key')==='api_key'?'selected':'' ?>>API Key</option><option value="password" <?= ($edit['pasarguard_auth_mode']??'')==='password'?'selected':'' ?>>Password</option></select></div>
       <div class="col-md-2"><label class="form-label">تمدید</label><select name="renew_method" class="form-select"><option value="append" <?= ($edit['renew_method']??'')==='append'?'selected':'' ?>>تجمیعی</option><option value="reset" <?= ($edit['renew_method']??'')==='reset'?'selected':'' ?>>ریست</option></select></div>
+      <div class="col-md-6"><label class="form-label">proxy_settings (JSON) — پاسارگاد/مرزبان</label><input name="proxies" class="form-control" dir="ltr" value="<?= Helper::escapeHtml($edit['proxies']??'') ?>" placeholder='{"vless":{},"vmess":{},"trojan":{},"shadowsocks":{}}'><small class="text-muted">خالی = <code>{"vless":{},...}</code> خودکار؛ مقدار <code>Input</code> یا رشته نامعتبر خطای دیکشنری می‌دهد.</small></div>
+      <div class="col-md-6"><label class="form-label">inbounds / group_ids (JSON یا CSV)</label><input name="inbounds" class="form-control" dir="ltr" value="<?= Helper::escapeHtml($edit['inbounds']??'') ?>" placeholder='[1,2]'><small class="text-muted">خالی = از گروه کانفیگ استفاده می‌شود</small></div>
       <div class="col-12"><div class="form-check"><input type="checkbox" name="is_active" class="form-check-input" id="active" <?= ($edit['is_active']??1)?'checked':'' ?>><label for="active" class="form-check-label">فعال</label></div></div>
       <div class="col-12"><button class="btn btn-primary"><?= $edit?'ویرایش':'افزودن' ?></button></div>
     </form>
