@@ -1,0 +1,42 @@
+:root{
+  --primary:#6366f1;
+  --primary-dark:#4f46e5;
+  --sidebar:#0f172a;
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --text:#1e293b;
+  --muted:#64748b;
+  --success:#10b981;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+}
+*{font-family:'Vazirmatn', Tahoma, sans-serif}
+body{background:var(--bg);color:var(--text);direction:rtl}
+.sidebar{background:var(--sidebar);min-height:100vh;color:#fff;transition:.3s}
+.sidebar .nav-link{color:#cbd5e1;border-radius:8px;margin:2px 8px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.sidebar .nav-link:hover,.sidebar .nav-link.active{background:var(--primary);color:#fff}
+.sidebar .brand{padding:20px;font-weight:800;font-size:1.2rem;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1e293b}
+.topbar{background:var(--card);border-bottom:1px solid #e2e8f0;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.card{border:none;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06);background:var(--card)}
+.card-header{background:transparent;border-bottom:1px solid #f1f5f9;font-weight:700}
+.stat-card{padding:20px;border-radius:16px;color:#fff;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;left:-20px;top:-20px;width:80px;height:80px;background:rgba(255,255,255,.15);border-radius:50%}
+.btn-primary{background:var(--primary);border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark)}
+.table{--bs-table-bg:transparent}
+.badge{font-weight:500;padding:6px 10px;border-radius:8px}
+.chat-box{height:55vh;overflow-y:auto;background:#f8fafc;border-radius:12px;padding:16px}
+.msg{max-width:75%;padding:10px 14px;border-radius:14px;margin:8px 0;font-size:.9rem;line-height:1.6}
+.msg.user{background:var(--primary);color:#fff;margin-right:auto;border-bottom-left-radius:4px}
+.msg.admin{background:#fff;border:1px solid #e2e8f0;margin-left:auto;border-bottom-right-radius:4px}
+.msg .meta{font-size:.7rem;opacity:.7;margin-top:4px}
+@media(max-width:992px){
+  .sidebar{position:fixed;right:-280px;top:0;width:280px;z-index:1000;height:100vh}
+  .sidebar.show{right:0}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}
+  .overlay.show{display:block}
+}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.login-card{max-width:420px;width:100%;border-radius:20px;overflow:hidden}
+.inline-key-preview{border:1px dashed #cbd5e1;border-radius:12px;padding:12px;background:#f8fafc}
+.kbd-btn{display:inline-block;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;margin:4px;font-size:.85rem}
