@@ -1,0 +1,40 @@
+# VPN Bot - Security & Routing
+Options -Indexes
+RewriteEngine On
+
+# Force HTTPS (uncomment on cloud)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# Deny access to sensitive files
+<FilesMatch "^(config\.php|\.env|composer\.json|composer\.lock)$">
+  Require all denied
+</FilesMatch>
+
+# Block direct access to src, config, database, logs, install after setup
+RewriteRule ^(src|config|database|logs)/ - [F,L]
+
+# Route admin pretty urls (optional)
+# RewriteRule ^admin/?$ admin/index.php [L]
+
+# Cache static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+</IfModule>
+
+# Protect uploads php execution
+<FilesMatch "\.php$">
+  <If "%{REQUEST_URI} =~ m#/public/uploads/#">
+    Require all denied
+  </If>
+</FilesMatch>
+
+# PHP settings for cloud hosting
+php_value upload_max_filesize 20M
+php_value post_max_size 20M
+php_value max_execution_time 30
+php_value memory_limit 256M

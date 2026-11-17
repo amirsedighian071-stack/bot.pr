@@ -1,0 +1,9 @@
+/logs/*.log
+/public/uploads/*
+!/public/uploads/.gitkeep
+/config/config.php
+/vendor/
+/node_modules/
+.env
+install/done.lock
+*.sql.gz

@@ -1,0 +1,26 @@
+<?php
+// کپی کنید به config.php و مقادیر را پر کنید
+return [
+    'db' => [
+        'host' => 'localhost',
+        'name' => 'vpn_bot',
+        'user' => 'root',
+        'pass' => '',
+        'charset' => 'utf8mb4',
+        'port' => 3306,
+    ],
+    'app' => [
+        'url' => 'https://yourdomain.com', // بدون / انتهایی
+        'debug' => false,
+        'timezone' => 'Asia/Tehran',
+    ],
+    'security' => [
+        'session_name' => 'VPNBOTSESSID',
+        'csrf_token_name' => '_csrf',
+        'upload_max_size' => 20 * 1024 * 1024, // 20MB
+    ],
+    'telegram' => [
+        'timeout' => 10,
+        'retry' => 2,
+    ],
+];
