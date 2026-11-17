@@ -1,4 +1,6 @@
 <?php
+// بافر برای جلوگیری از Cannot modify header information
+if (ob_get_level() === 0) ob_start();
 require_once __DIR__ . '/../../config/constants.php';
 require_once __DIR__ . '/../../src/Core/Database.php';
 require_once __DIR__ . '/../../src/Core/Config.php';

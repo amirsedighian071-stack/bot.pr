@@ -1,4 +1,7 @@
 <?php
+// بافر خروجی برای جلوگیری از خطای headers already sent
+if (ob_get_level() === 0) ob_start();
+
 // ثابت‌های سیستمی
 define('APP_VERSION', '1.0.0');
 define('APP_NAME', 'VPN Bot - Faoxima Optimized');
