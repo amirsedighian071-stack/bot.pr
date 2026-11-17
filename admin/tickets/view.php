@@ -1,13 +1,27 @@
 <?php
-$pageTitle='گفتگو تیکت';
-require_once __DIR__ . '/../layout/header.php';
+// پردازش قبل از خروجی برای جلوگیری از headers already sent
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
 use Core\Telegram;
+use Core\Auth;
+
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
 
 $id=(int)($_GET['id']??0);
 $ticket=Database::fetchOne("SELECT t.*, u.username, u.first_name FROM tickets t LEFT JOIN users u ON u.telegram_id=t.telegram_id WHERE t.id=?",[$id]);
-if(!$ticket){ echo "<div class='alert alert-danger'>تیکت یافت نشد</div>"; require_once __DIR__ . '/../layout/footer.php'; exit; }
+if(!$ticket){
+    $pageTitle='گفتگو تیکت';
+    require_once __DIR__ . '/../layout/header.php';
+    echo "<div class='alert alert-danger'>تیکت یافت نشد</div>";
+    require_once __DIR__ . '/../layout/footer.php';
+    exit;
+}
 
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $msg=trim($_POST['message']??'');
@@ -25,21 +39,25 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if($msg || $file){
         Database::query("INSERT INTO ticket_messages (ticket_id,sender_type,sender_id,message,file_path,file_type) VALUES (?,?,?,?,?,?)",[$id,'admin', (string)($_SESSION['admin_id']??'admin'), $msg, $file, $fileType]);
         Database::query("UPDATE tickets SET status='answered', updated_at=NOW() WHERE id=?",[$id]);
-        // ارسال به تلگرام کاربر
         try{
             $tg=new Telegram();
-            $text="<i class="bi bi-chat-dots"></i> پاسخ پشتیبانی (تیکت #$id):\n\n".$msg;
+            $text='<i class="bi bi-chat-dots"></i> پاسخ پشتیبانی (تیکت #' . $id . '):' . "\n\n" . $msg;
             if($file){
                 $fullUrl=Helper::appUrl('public/'.$file);
-                // سعی ارسال فایل، اگر عکس باشد sendPhoto
                 if(str_contains($fileType??'','image')) $tg->sendPhoto((int)$ticket['telegram_id'], $fullUrl, $text);
-                else $tg->sendMessage((int)$ticket['telegram_id'], $text . "\n\n<i class="bi bi-paperclip"></i> فایل: $fullUrl");
+                else $tg->sendMessage((int)$ticket['telegram_id'], $text . "\n\n" . '<i class="bi bi-paperclip"></i> فایل: ' . $fullUrl);
             } else $tg->sendMessage((int)$ticket['telegram_id'], $text);
-        } catch(Exception $e){}
+        } catch(\Throwable $e){}
         $_SESSION['flash_success']='پاسخ ارسال شد';
+        Helper::redirect(Helper::appUrl('admin/tickets/view.php?id='.$id));
+    } else {
+        $_SESSION['flash_error']='پیام خالی است';
         Helper::redirect(Helper::appUrl('admin/tickets/view.php?id='.$id));
     }
 }
+
+$pageTitle='گفتگو تیکت';
+require_once __DIR__ . '/../layout/header.php';
 
 $messages=Database::fetchAll("SELECT * FROM ticket_messages WHERE ticket_id=? ORDER BY id ASC",[$id]);
 Database::query("UPDATE ticket_messages SET is_read=1 WHERE ticket_id=? AND sender_type='user'",[$id]);

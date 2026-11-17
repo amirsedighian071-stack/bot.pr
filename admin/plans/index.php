@@ -1,8 +1,15 @@
 <?php
-$pageTitle='پلن‌ها';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $id=(int)($_POST['id']??0);
     $service_id=(int)($_POST['service_id']??0);
@@ -19,7 +26,10 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     else Database::query("INSERT INTO plans (service_id,config_group_id,name,price,price_per_gb,duration_days,volume_gb,is_renewable,is_active,sort_order) VALUES (?,?,?,?,?,?,?,?,?,?)",[$service_id,$group_id,$name,$price,$perGb,$days,$vol,$renew,$active,$order]);
     $_SESSION['flash_success']='ذخیره شد'; Helper::redirect(Helper::appUrl('admin/plans/index.php'));
 }
-if(isset($_GET['delete'])){ Database::query("DELETE FROM plans WHERE id=?",[(int)$_GET['delete']]); Helper::redirect(Helper::appUrl('admin/plans/index.php')); }
+if(isset($_GET['delete'])){ Database::query("DELETE FROM plans WHERE id=?",[(int)$_GET['delete']]); $_SESSION['flash_success']='حذف شد'; Helper::redirect(Helper::appUrl('admin/plans/index.php')); }
+
+$pageTitle='پلن‌ها';
+require_once __DIR__ . '/../layout/header.php';
 $plans=Database::fetchAll("SELECT p.*, s.name as service_name, g.name as group_name FROM plans p LEFT JOIN services s ON s.id=p.service_id LEFT JOIN config_groups g ON g.id=p.config_group_id ORDER BY p.id DESC");
 $services=Database::fetchAll("SELECT * FROM services");
 $groups=Database::fetchAll("SELECT g.*, p.name as panel_name FROM config_groups g LEFT JOIN panels p ON p.id=g.panel_id");

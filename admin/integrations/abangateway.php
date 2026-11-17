@@ -1,9 +1,15 @@
 <?php
-$pageTitle='درگاه آبان‌گیت';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Config;
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $token = trim($_POST['abangateway_token']??'');
@@ -13,14 +19,21 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $_SESSION['flash_success']='ذخیره شد';
     Helper::redirect(Helper::appUrl('admin/integrations/abangateway.php'));
 }
-
-// تست اتصال
 $testResult=null;
 if (isset($_GET['test'])) {
     require_once __DIR__ . '/../../src/Payment/AbanGateway.php';
-    $ag = new Payment\AbanGateway();
-    $testResult = $ag->testConnection();
+    try{
+        $ag = new \Payment\AbanGateway();
+        $testResult = $ag->testConnection();
+        $_SESSION['flash_'.($testResult['success']??false?'success':'error')] = $testResult['message'] ?? json_encode($testResult, JSON_UNESCAPED_UNICODE);
+    }catch(\Throwable $e){ $testResult=['success'=>false,'message'=>$e->getMessage()]; $_SESSION['flash_error']=$e->getMessage(); }
+    // Don't redirect immediately, show result after header, but we still want to avoid double header - keep redirect alternative
+    // If test via GET, we keep result for display, so do not redirect; if you want redirect, uncomment:
+    // Helper::redirect(Helper::appUrl('admin/integrations/abangateway.php'));
 }
+
+$pageTitle='درگاه آبان‌گیت';
+require_once __DIR__ . '/../layout/header.php';
 $token = Config::setting('abangateway_token','');
 $cb = Config::setting('abangateway_callback_url', Helper::appUrl('public/callback.php'));
 $logs = Database::fetchAll("SELECT * FROM abangateway_logs ORDER BY id DESC LIMIT 20");

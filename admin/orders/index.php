@@ -1,8 +1,14 @@
 <?php
-$pageTitle='سفارش‌ها';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
 
 if(isset($_GET['recheck'])){
     require_once __DIR__ . '/../../src/Payment/AbanGateway.php';
@@ -46,6 +52,8 @@ if(isset($_GET['retry_deliver'])){
     Helper::redirect(Helper::appUrl('admin/orders/index.php'));
 }
 
+$pageTitle='سفارش‌ها';
+require_once __DIR__ . '/../layout/header.php';
 $status = $_GET['status']??'';
 $where = $status ? "WHERE o.status='$status'" : '';
 $q = $_GET['q']??'';

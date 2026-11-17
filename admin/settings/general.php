@@ -1,36 +1,101 @@
 <?php
-$pageTitle='تنظیمات عمومی و پیام‌ها';
-require_once __DIR__ . '/../layout/header.php';
+// پردازش قبل از خروجی برای جلوگیری از headers already sent و صفحه سفید
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Config;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $fields = ['fee_amount','trial_volume_mb','trial_days','trial_daily_limit','token_per_invite','gift_5gb_tokens','gift_10gb_tokens','gift_cash_tokens','support_channel_link','education_link','app_download_link','faq_text','welcome_text','payment_before_text','payment_caption','referral_banner','bot_username'];
     foreach($fields as $k){
         if(isset($_POST[$k])) Config::setSetting($k, trim($_POST[$k]));
     }
-    // متون داینامیک
     foreach($_POST['bot_texts']??[] as $key=>$val){
         Database::query("INSERT INTO bot_texts (text_key, text_value) VALUES (?,?) ON DUPLICATE KEY UPDATE text_value=VALUES(text_value)", [$key, $val]);
     }
-    // منو
-    if(isset($_POST['menus'])){
+    // منو - پشتیبانی از هر دو ساختار flat و indexed
+    if(isset($_POST['menus']) && is_array($_POST['menus'])){
+        $menusRaw = $_POST['menus'];
+        $menus = [];
+        // اگر ساختار flat باشد (هر عنصر فقط یک کلید دارد)، بازسازی کن
+        $isFlat = false;
+        foreach($menusRaw as $m){
+            if(is_array($m) && count($m)===1 && isset($m['row_num']) || isset($m['col_num']) || isset($m['label'])){
+                // بررسی flat: اگر هر $m فقط یک کلید دارد
+                if(count($m)===1) $isFlat=true;
+            }
+        }
+        if($isFlat){
+            // بازسازی از flat: هر 5 فیلد یک ردیف
+            $flatVals = [];
+            foreach($menusRaw as $m){
+                foreach($m as $k=>$v) $flatVals[] = [$k=>$v];
+            }
+            // روش ساده: از POST خام بازخوانی با regex - جایگزین با دسته‌بندی 5 تایی
+            $menus = [];
+            $keys = ['row_num','col_num','emoji','label','callback_data'];
+            $idx=0;
+            $current=[];
+            foreach($_POST['menus'] as $entry){
+                foreach($entry as $k=>$v){
+                    $current[$k]=$v;
+                    if(count($current)===5){
+                        $menus[]=$current;
+                        $current=[];
+                    }
+                }
+            }
+            if($current) $menus[]=$current;
+        } else {
+            $menus = $menusRaw;
+        }
+        // پاکسازی و ذخیره
         Database::query("DELETE FROM bot_menus");
-        foreach($_POST['menus'] as $m){
+        foreach($menus as $m){
+            if(!is_array($m)) continue;
             if(empty($m['label'])||empty($m['callback_data'])) continue;
-            Database::query("INSERT INTO bot_menus (row_num,col_num,label,callback_data,emoji,is_active) VALUES (?,?,?,?,?,?)", [$m['row_num'], $m['col_num'], $m['label'], $m['callback_data'], $m['emoji']??'', 1]);
+            $rn = (int)($m['row_num']??0);
+            $cn = (int)($m['col_num']??0);
+            if($rn<1 || $rn>5) continue;
+            if($cn<1 || $cn>2) $cn=1;
+            Database::query("INSERT INTO bot_menus (row_num,col_num,label,callback_data,emoji,is_active) VALUES (?,?,?,?,?,?)", [$rn, $cn, trim($m['label']), trim($m['callback_data']), trim($m['emoji']??''), 1]);
+        }
+        // اگر منو خالی شد، پیش‌فرض را بازگردان
+        $cnt = Database::fetchOne("SELECT COUNT(*) as c FROM bot_menus")['c'] ?? 0;
+        if($cnt==0){
+            $defaults = [
+                [1,1,'خرید اشتراک','buy',''],
+                [2,1,'تست رایگان','trial',''],
+                [3,1,'حساب کاربری','account',''],
+                [3,2,'اشتراک من','my_subs',''],
+                [4,1,'پشتیبانی','support',''],
+                [4,2,'آموزش','education',''],
+                [5,1,'زیرمجموعه‌گیری','referral',''],
+            ];
+            foreach($defaults as $d) Database::query("INSERT INTO bot_menus (row_num,col_num,label,callback_data,emoji,is_active) VALUES (?,?,?,?,?,?)", [$d[0],$d[1],$d[2],$d[3],$d[4],1]);
         }
     }
-    $_SESSION['flash_success']='ذخیره شد';
+    $_SESSION['flash_success']='تنظیمات با موفقیت ذخیره شد';
     Helper::redirect(Helper::appUrl('admin/settings/general.php'));
 }
+
+$pageTitle='تنظیمات عمومی و پیام‌ها';
+require_once __DIR__ . '/../layout/header.php';
 
 $settings = [];
 foreach(Database::fetchAll("SELECT setting_key,setting_value FROM settings") as $r) $settings[$r['setting_key']]=$r['setting_value'];
 $botTexts = [];
 foreach(Database::fetchAll("SELECT text_key,text_value FROM bot_texts") as $r) $botTexts[$r['text_key']]=$r['text_value'];
 $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
+?>
+
 ?>
 <form method="post">
 <div class="row g-3">
@@ -81,13 +146,13 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
           <table class="table table-sm" id="menuTable">
             <thead><tr><th>ردیف</th><th>ستون</th><th>ایموجی</th><th>عنوان</th><th>callback_data</th><th></th></tr></thead>
             <tbody>
-              <?php foreach($menus as $m): ?>
+              <?php foreach($menus as $idx=>$m): ?>
               <tr>
-                <td><input name="menus[][row_num]" value="<?= $m['row_num'] ?>" class="form-control form-control-sm" style="width:60px"></td>
-                <td><input name="menus[][col_num]" value="<?= $m['col_num'] ?>" class="form-control form-control-sm" style="width:60px"></td>
-                <td><input name="menus[][emoji]" value="<?= $m['emoji'] ?>" class="form-control form-control-sm" style="width:70px"></td>
-                <td><input name="menus[][label]" value="<?= $m['label'] ?>" class="form-control form-control-sm"></td>
-                <td><input name="menus[][callback_data]" value="<?= $m['callback_data'] ?>" class="form-control form-control-sm"></td>
+                <td><input name="menus[<?= $idx ?>][row_num]" value="<?= $m['row_num'] ?>" class="form-control form-control-sm" style="width:60px"></td>
+                <td><input name="menus[<?= $idx ?>][col_num]" value="<?= $m['col_num'] ?>" class="form-control form-control-sm" style="width:60px"></td>
+                <td><input name="menus[<?= $idx ?>][emoji]" value="<?= $m['emoji'] ?>" class="form-control form-control-sm" style="width:70px"></td>
+                <td><input name="menus[<?= $idx ?>][label]" value="<?= $m['label'] ?>" class="form-control form-control-sm"></td>
+                <td><input name="menus[<?= $idx ?>][callback_data]" value="<?= $m['callback_data'] ?>" class="form-control form-control-sm"></td>
                 <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">حذف</button></td>
               </tr>
               <?php endforeach; ?>
@@ -106,7 +171,8 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
 function addMenuRow(){
   const tbody=document.querySelector('#menuTable tbody');
   const tr=document.createElement('tr');
-  tr.innerHTML=`<td><input name="menus[][row_num]" value="1" class="form-control form-control-sm" style="width:60px"></td><td><input name="menus[][col_num]" value="1" class="form-control form-control-sm" style="width:60px"></td><td><input name="menus[][emoji]" class="form-control form-control-sm" style="width:70px"></td><td><input name="menus[][label]" class="form-control form-control-sm"></td><td><input name="menus[][callback_data]" class="form-control form-control-sm"></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">حذف</button></td>`;
+  const idx = document.querySelectorAll('#menuTable tbody tr').length;
+  tr.innerHTML=`<td><input name="menus[${idx}][row_num]" value="1" class="form-control form-control-sm" style="width:60px"></td><td><input name="menus[${idx}][col_num]" value="1" class="form-control form-control-sm" style="width:60px"></td><td><input name="menus[${idx}][emoji]" class="form-control form-control-sm" style="width:70px"></td><td><input name="menus[${idx}][label]" class="form-control form-control-sm"></td><td><input name="menus[${idx}][callback_data]" class="form-control form-control-sm"></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">حذف</button></td>`;
   tbody.appendChild(tr);
 }
 </script>

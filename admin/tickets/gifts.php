@@ -1,21 +1,34 @@
 <?php
-$pageTitle='درخواست‌های هدیه نقدی و توکن';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
-if(isset($_GET['approve'])){ Database::query("UPDATE token_gifts SET status='approved' WHERE id=?",[(int)$_GET['approve']]); Helper::redirect(Helper::appUrl('admin/tickets/gifts.php')); }
-if(isset($_GET['paid'])){ Database::query("UPDATE token_gifts SET status='paid' WHERE id=?",[(int)$_GET['paid']]); Helper::redirect(Helper::appUrl('admin/tickets/gifts.php')); }
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
+if(isset($_GET['approve'])){ Database::query("UPDATE token_gifts SET status='approved' WHERE id=?",[(int)$_GET['approve']]); $_SESSION['flash_success']='تأیید شد'; Helper::redirect(Helper::appUrl('admin/tickets/gifts.php')); }
+if(isset($_GET['paid'])){ Database::query("UPDATE token_gifts SET status='paid' WHERE id=?",[(int)$_GET['paid']]); $_SESSION['flash_success']='پرداخت شد ثبت شد'; Helper::redirect(Helper::appUrl('admin/tickets/gifts.php')); }
 if(isset($_GET['reject'])){
     $id=(int)$_GET['reject'];
     $g=Database::fetchOne("SELECT * FROM token_gifts WHERE id=?",[$id]);
     if($g){
-        // بازگشت توکن
         $u=Database::fetchOne("SELECT * FROM users WHERE telegram_id=?",[$g['telegram_id']]);
         if($u){ Database::query("UPDATE users SET tokens=tokens+? WHERE telegram_id=?",[$g['tokens_cost'],$g['telegram_id']]); Database::query("INSERT INTO token_transactions (user_id,telegram_id,amount,type,reason,balance_after) VALUES (?,?,?,?,?,?)",[$u['id'],$g['telegram_id'],$g['tokens_cost'],'redeem','بازگشت توکن هدیه رد شده', $u['tokens']+$g['tokens_cost']]); }
         Database::query("UPDATE token_gifts SET status='rejected' WHERE id=?",[$id]);
+        $_SESSION['flash_success']='رد شد و توکن بازگشت';
     }
     Helper::redirect(Helper::appUrl('admin/tickets/gifts.php'));
 }
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['gift_action'])){
+    // placeholder for future POST handling
+}
+
+$pageTitle='درخواست‌های هدیه نقدی و توکن';
+require_once __DIR__ . '/../layout/header.php';
 $gifts=Database::fetchAll("SELECT * FROM token_gifts ORDER BY id DESC LIMIT 100");
 $tx=Database::fetchAll("SELECT * FROM token_transactions ORDER BY id DESC LIMIT 50");
 ?>

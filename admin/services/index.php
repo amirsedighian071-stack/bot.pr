@@ -1,8 +1,15 @@
 <?php
-$pageTitle='سرویس‌ها';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../src/Core/Database.php';
+require_once __DIR__ . '/../../src/Core/Config.php';
+require_once __DIR__ . '/../../src/Core/Helper.php';
+require_once __DIR__ . '/../../src/Core/Auth.php';
 use Core\Database;
 use Core\Helper;
+use Core\Auth;
+Auth::startSession();
+if (!Auth::check()) Helper::redirect(Helper::appUrl('admin/login.php'));
+
 if($_SERVER['REQUEST_METHOD']==='POST'){
     $id=(int)($_POST['id']??0);
     $name=trim($_POST['name']??'');
@@ -13,7 +20,10 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     else Database::query("INSERT INTO services (name,description,is_active,sort_order) VALUES (?,?,?,?)",[$name,$desc,$active,$order]);
     $_SESSION['flash_success']='ذخیره شد'; Helper::redirect(Helper::appUrl('admin/services/index.php'));
 }
-if(isset($_GET['delete'])){ Database::query("DELETE FROM services WHERE id=?",[(int)$_GET['delete']]); Helper::redirect(Helper::appUrl('admin/services/index.php')); }
+if(isset($_GET['delete'])){ Database::query("DELETE FROM services WHERE id=?",[(int)$_GET['delete']]); $_SESSION['flash_success']='حذف شد'; Helper::redirect(Helper::appUrl('admin/services/index.php')); }
+
+$pageTitle='سرویس‌ها';
+require_once __DIR__ . '/../layout/header.php';
 $services=Database::fetchAll("SELECT * FROM services ORDER BY sort_order, id DESC");
 $edit=null; if(isset($_GET['edit'])) $edit=Database::fetchOne("SELECT * FROM services WHERE id=?",[(int)$_GET['edit']]);
 ?>

@@ -146,3 +146,38 @@ body{background:var(--bg);background-image:radial-gradient(ellipse at top,rgba(1
 @keyframes neonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes neonFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Bootstrap Modal - Opaque Dark Neon - Task 5 */
+.modal{z-index:9999}
+.modal-backdrop{z-index:9998;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px)}
+.modal-content{background-color:#12121a !important;border:1px solid rgba(139,92,246,0.25) !important;color:#e4e4e7;box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 30px rgba(139,92,246,0.15)}
+.modal-header{border-bottom:1px solid rgba(139,92,246,0.12);background:rgba(24,24,27,0.5)}
+.modal-footer{border-top:1px solid rgba(63,63,70,0.3);background:rgba(24,24,27,0.4)}
+.modal-title{color:#fff;font-weight:800}
+.btn-close{filter:invert(1) grayscale(100%) brightness(200%)}
+
+/* Light Mode - Task 7 */
+body.light-mode{background:#f8fafc;background-image:none;color:#1e293b}
+body.light-mode .sidebar{background:#ffffff;border-left:1px solid #e2e8f0;box-shadow:4px 0 24px rgba(0,0,0,0.06)}
+body.light-mode .sidebar .brand{border-bottom-color:#f1f5f9;background:linear-gradient(135deg,rgba(139,92,246,0.06),transparent)}
+body.light-mode .brand-title{color:#1e293b}
+body.light-mode .brand-sub{color:#64748b}
+body.light-mode .sidebar .nav-link{color:#475569}
+body.light-mode .sidebar .nav-link:hover{background:rgba(139,92,246,0.08);color:#1e293b}
+body.light-mode .accordion-header{color:#475569}
+body.light-mode .accordion-header:hover{background:rgba(139,92,246,0.06);color:#1e293b}
+body.light-mode .topbar{background:rgba(255,255,255,0.85);border-bottom-color:#e2e8f0;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+body.light-mode .topbar h5{color:#1e293b}
+body.light-mode .card{background:rgba(255,255,255,0.92);border-color:#e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06)}
+body.light-mode .card-header{border-bottom-color:#f1f5f9;color:#1e293b}
+body.light-mode .table{--bs-table-color:#334155}
+body.light-mode .form-control, body.light-mode .form-select{background:#ffffff;border-color:#e2e8f0;color:#1e293b}
+body.light-mode .form-control:focus, body.light-mode .form-select:focus{background:#ffffff;border-color:#8b5cf6;color:#1e293b}
+body.light-mode .chat-box{background:#f8fafc;border-color:#e2e8f0}
+body.light-mode .neon-creator-card{background:rgba(255,255,255,0.9);border-color:rgba(139,92,246,0.15)}
+body.light-mode .modal-content{background-color:#ffffff !important;color:#1e293b;border-color:#e2e8f0 !important}
+body.light-mode .modal-header, body.light-mode .modal-footer{background:#f8fafc;border-color:#e2e8f0}
+body.light-mode .modal-title{color:#1e293b}
+body.light-mode .btn-close{filter:none}
+body.light-mode .alert-success{background:rgba(16,185,129,0.08);color:#065f46}
+body.light-mode .alert-danger{background:rgba(239,68,68,0.08);color:#991b1b}
