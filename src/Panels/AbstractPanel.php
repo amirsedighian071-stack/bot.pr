@@ -7,22 +7,22 @@ abstract class AbstractPanel implements PanelInterface {
     protected array $config;
     protected string $type;
     protected ?string $cachedToken = null;
+    protected bool $authenticating = false;
 
     public function __construct(array $panelRow) {
         $this->config = $panelRow;
         $this->type = $panelRow['type'] ?? 'manual';
     }
 
-    protected function httpRequest(string $method, string $endpoint, array $data = [], array $headers = [], int $timeout = 0): array {
+    protected function httpRequest(string $method, string $endpoint, array $data = [], array $headers = [], int $timeout = 0, bool $withAuth = true): array {
         $timeout = $timeout ?: (int)($this->config['timeout'] ?? 10);
         $url = rtrim($this->config['url'], '/') . '/' . ltrim($endpoint, '/');
         
         $ch = curl_init($url);
         $defaultHeaders = ['Accept: application/json', 'Content-Type: application/json'];
         $headers = array_merge($defaultHeaders, $headers);
-        if ($this->cachedToken || $this->getToken()) {
-            // توکن در هدر اضافه می‌شود در کلاس فرزند اگر نیاز باشد
-        }
+        // حذف فراخوانی خودکار getToken برای جلوگیری از بازگشت بی‌نهایت
+        // توکن فقط توسط کلاس فرزند از طریق headers() و با پرچم authenticating مدیریت می‌شود
         $opts = [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $timeout,

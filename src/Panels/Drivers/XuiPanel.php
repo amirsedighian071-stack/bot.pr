@@ -27,8 +27,8 @@ class XuiPanel extends AbstractPanel {
             $this->sessionCookie = 'ok';
             return true;
         }
-        // try json login
-        $res2 = $this->httpRequest('POST','/login',['username'=>$this->config['username'],'password'=>$this->config['password']]);
+        // try json login without auth to avoid recursion
+        $res2 = $this->httpRequest('POST','/login',['username'=>$this->config['username'],'password'=>$this->config['password']], [], 0, false);
         return $res2['success'];
     }
 
