@@ -19,7 +19,7 @@ $appUrl = Helper::appUrl('');
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= $pageTitle ?? 'پنل مدیریت VPN' ?></title>
+<title>پنل هوشمند فروش و مدیریت VPN<?= isset($pageTitle) ? ' | ' . $pageTitle : '' ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@ $appUrl = Helper::appUrl('');
 <div class="topbar">
   <div class="d-flex align-items-center gap-2">
     <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
-    <h5 class="m-0 fw-bold"><?= $pageTitle ?? 'داشبورد' ?></h5>
+    <h5 class="m-0 fw-bold"><i class="bi bi-shield-check me-1 text-primary"></i>پنل هوشمند فروش و مدیریت VPN<?= isset($pageTitle) && $pageTitle !== 'داشبورد' ? ' <span class="text-muted fw-normal small">| ' . htmlspecialchars($pageTitle) . '</span>' : '' ?></h5>
   </div>
   <div class="d-flex align-items-center gap-3">
     <span class="small text-muted d-none d-md-inline"><?= $admin['username'] ?? '' ?> (<?= $admin['role'] ?? '' ?>)</span>

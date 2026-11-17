@@ -36,7 +36,7 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
 <div class="row g-3">
   <div class="col-lg-6">
     <div class="card">
-      <div class="card-header">⚙️ تنظیمات مالی و توکن</div>
+      <div class="card-header"><i class="bi bi-gear-fill"></i> تنظیمات مالی و توکن</div>
       <div class="card-body row g-3">
         <div class="col-6"><label class="form-label">کارمزد (تومان)</label><input name="fee_amount" class="form-control" value="<?= $settings['fee_amount']??3000 ?>"></div>
         <div class="col-6"><label class="form-label">حجم تست (MB)</label><input name="trial_volume_mb" class="form-control" value="<?= $settings['trial_volume_mb']??100 ?>"></div>
@@ -49,7 +49,7 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
       </div>
     </div>
     <div class="card mt-3">
-      <div class="card-header">🔗 لینک‌ها</div>
+      <div class="card-header"><i class="bi bi-link-45deg"></i> لینک‌ها</div>
       <div class="card-body row g-3">
         <div class="col-12"><label class="form-label">لینک کانال پشتیبانی</label><input name="support_channel_link" class="form-control" value="<?= $settings['support_channel_link']??'' ?>"></div>
         <div class="col-12"><label class="form-label">لینک آموزش</label><input name="education_link" class="form-control" value="<?= $settings['education_link']??'' ?>"></div>
@@ -61,7 +61,7 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
   </div>
   <div class="col-lg-6">
     <div class="card">
-      <div class="card-header">📝 متن‌های ربات</div>
+      <div class="card-header"><i class="bi bi-pencil-square"></i> متن‌های ربات</div>
       <div class="card-body">
         <div class="mb-2"><label class="form-label">متن خوش‌آمدگویی (متغیر: {first_name},{user_id},{tokens})</label><textarea name="bot_texts[welcome]" rows="3" class="form-control"><?= Helper::escapeHtml($botTexts['welcome']??'') ?></textarea></div>
         <div class="mb-2"><label class="form-label">متن قبل پرداخت</label><input name="payment_before_text" class="form-control" value="<?= Helper::escapeHtml($settings['payment_before_text']??'') ?>"></div>
@@ -75,7 +75,7 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
   </div>
   <div class="col-12">
     <div class="card">
-      <div class="card-header">🧩 منوساز شیشه‌ای (Inline Keyboard)</div>
+      <div class="card-header"><i class="bi bi-puzzle"></i> منوساز شیشه‌ای (Inline Keyboard)</div>
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-sm" id="menuTable">
@@ -95,12 +95,12 @@ $menus = Database::fetchAll("SELECT * FROM bot_menus ORDER BY row_num,col_num");
           </table>
         </div>
         <button type="button" class="btn btn-sm btn-outline-primary" onclick="addMenuRow()">+ افزودن دکمه</button>
-        <div class="inline-key-preview mt-3"><b>پیش‌نمایش:</b> <span class="kbd-btn">🛒 خرید اشتراک</span> <span class="kbd-btn">🎁 تست</span> ...</div>
+        <div class="inline-key-preview mt-3"><b>پیش‌نمایش:</b> <span class="kbd-btn"><i class="bi bi-cart3"></i> خرید اشتراک</span> <span class="kbd-btn"><i class="bi bi-gift"></i> تست</span> ...</div>
       </div>
     </div>
   </div>
 </div>
-<div class="mt-3"><button class="btn btn-primary px-4">💾 ذخیره همه</button></div>
+<div class="mt-3"><button class="btn btn-primary px-4"><i class="bi bi-floppy"></i> ذخیره همه</button></div>
 </form>
 <script>
 function addMenuRow(){
@@ -110,4 +110,7 @@ function addMenuRow(){
   tbody.appendChild(tr);
 }
 </script>
+
+<?php include __DIR__ . '/../layout/creator_card.php'; ?>
+
 <?php require_once __DIR__ . '/../layout/footer.php'; ?>

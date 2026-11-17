@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ورود مدیریت</title>
+<title>پنل هوشمند فروش و مدیریت VPN | ورود</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>body{font-family:Vazirmatn, Tahoma;background:linear-gradient(135deg,#6366f1,#8b5cf6);min-height:100vh;display:flex;align-items:center;justify-content:center}</style>
@@ -41,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <div class="card shadow-lg" style="max-width:420px;width:95%;border-radius:20px;overflow:hidden">
   <div class="card-body p-4">
     <div class="text-center mb-4">
-      <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:60px;height:60px;font-size:28px">🔐</div>
-      <h4 class="mt-3 fw-bold">ورود به پنل مدیریت</h4>
-      <p class="text-muted small">VPN Bot - Faoxima Optimized</p>
+      <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:60px;height:60px;font-size:28px"><i class="bi bi-shield-lock"></i></div>
+      <h4 class="mt-3 fw-bold">پنل هوشمند فروش و مدیریت VPN</h4>
+      <p class="text-muted small">پنل هوشمند فروش و مدیریت VPN - Faoxima Optimized</p>
     </div>
     <?php if($error): ?><div class="alert alert-danger py-2 small"><?= $error ?></div><?php endif; ?>
     <?php if(!empty($_SESSION['flash_success'])): ?><div class="alert alert-success py-2 small"><?= $_SESSION['flash_success']; unset($_SESSION['flash_success']); ?></div><?php endif; ?>

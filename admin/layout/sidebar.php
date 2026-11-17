@@ -1,5 +1,5 @@
 <div class="sidebar d-flex flex-column" id="sidebar" style="width:270px">
-  <div class="brand"><i class="bi bi-shield-lock-fill fs-4 text-primary"></i> VPN Bot <small class="opacity-75 fw-normal">Faoxima Style</small></div>
+  <div class="brand"><i class="bi bi-shield-lock-fill fs-4 text-primary"></i> پنل هوشمند فروش و مدیریت VPN <small class="opacity-75 fw-normal">Faoxima Style</small></div>
   <nav class="nav flex-column py-2 flex-grow-1" style="overflow-y:auto">
     <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'],'/admin/index.php')?'active':'' ?>" href="<?= \Core\Helper::appUrl('admin/index.php') ?>"><i class="bi bi-speedometer2"></i> داشبورد</a>
     <div class="small text-uppercase opacity-50 px-3 mt-3">ربات</div>

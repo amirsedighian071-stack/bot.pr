@@ -40,13 +40,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 $broadcasts=Database::fetchAll("SELECT * FROM broadcasts ORDER BY id DESC LIMIT 20");
 ?>
 <div class="card mb-3">
-  <div class="card-header">📢 ارسال پیام همگانی</div>
+  <div class="card-header"><i class="bi bi-megaphone"></i> ارسال پیام همگانی</div>
   <div class="card-body">
     <form method="post" enctype="multipart/form-data" class="row g-3">
       <div class="col-12"><label class="form-label">متن پیام (پشتیبانی HTML)</label><textarea name="message" rows="4" class="form-control" required placeholder="سلام ..."></textarea></div>
       <div class="col-md-4"><label class="form-label">فیلتر گیرندگان</label><select name="target_filter" class="form-select"><option value="all">همه کاربران</option><option value="buyers">فقط خریداران</option><option value="no_sub">بدون اشتراک</option></select></div>
       <div class="col-md-4"><label class="form-label">عکس/ویدیو (اختیاری)</label><input type="file" name="media" class="form-control"></div>
-      <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100">🚀 ارسال همگانی</button></div>
+      <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100"><i class="bi bi-rocket-takeoff"></i> ارسال همگانی</button></div>
     </form>
     <div class="alert alert-warning py-2 small mt-3">برای جلوگیری از اسپم تلگرام، ارسال با تأخیر 0.2 ثانیه انجام می‌شود. در هاست ابری از cron یا صف استفاده کنید برای لیست بزرگ.</div>
   </div>

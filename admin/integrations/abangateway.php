@@ -28,7 +28,7 @@ $logs = Database::fetchAll("SELECT * FROM abangateway_logs ORDER BY id DESC LIMI
 <div class="row g-3">
   <div class="col-lg-5">
     <div class="card">
-      <div class="card-header">💳 تنظیمات آبان‌گیت (abangateway.ir)</div>
+      <div class="card-header"><i class="bi bi-credit-card-2-front"></i> تنظیمات آبان‌گیت (abangateway.ir)</div>
       <div class="card-body">
         <form method="post">
           <div class="mb-3"><label class="form-label">ABAN_TOKEN (API Key)</label><input name="abangateway_token" class="form-control" value="<?= Helper::escapeHtml($token) ?>" placeholder="Bearer ..."></div>
@@ -37,7 +37,7 @@ $logs = Database::fetchAll("SELECT * FROM abangateway_logs ORDER BY id DESC LIMI
             <div class="form-text">مثال: <?= Helper::appUrl('public/callback.php?order_id=ORD-...') ?></div>
           </div>
           <button class="btn btn-primary">ذخیره</button>
-          <a href="?test=1" class="btn btn-outline-success">🔍 تست اتصال به API</a>
+          <a href="?test=1" class="btn btn-outline-success"><i class="bi bi-search"></i> تست اتصال به API</a>
         </form>
         <?php if($testResult): ?>
           <div class="alert mt-3 <?= $testResult['success']?'alert-success':'alert-danger' ?> py-2"><?= $testResult['message'] ?></div>
@@ -50,7 +50,7 @@ $logs = Database::fetchAll("SELECT * FROM abangateway_logs ORDER BY id DESC LIMI
   </div>
   <div class="col-lg-7">
     <div class="card">
-      <div class="card-header">📜 لاگ تراکنش‌های آبان‌گیت</div>
+      <div class="card-header"><i class="bi bi-file-text"></i> لاگ تراکنش‌های آبان‌گیت</div>
       <div class="table-responsive">
         <table class="table table-sm table-hover mb-0 small">
           <thead class="table-light"><tr><th>سفارش</th><th>مبلغ ریال/تومان</th><th>وضعیت</th><th>زمان</th></tr></thead>

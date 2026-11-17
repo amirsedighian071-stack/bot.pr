@@ -28,12 +28,12 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         // ارسال به تلگرام کاربر
         try{
             $tg=new Telegram();
-            $text="💬 پاسخ پشتیبانی (تیکت #$id):\n\n".$msg;
+            $text="<i class="bi bi-chat-dots"></i> پاسخ پشتیبانی (تیکت #$id):\n\n".$msg;
             if($file){
                 $fullUrl=Helper::appUrl('public/'.$file);
                 // سعی ارسال فایل، اگر عکس باشد sendPhoto
                 if(str_contains($fileType??'','image')) $tg->sendPhoto((int)$ticket['telegram_id'], $fullUrl, $text);
-                else $tg->sendMessage((int)$ticket['telegram_id'], $text . "\n\n📎 فایل: $fullUrl");
+                else $tg->sendMessage((int)$ticket['telegram_id'], $text . "\n\n<i class="bi bi-paperclip"></i> فایل: $fullUrl");
             } else $tg->sendMessage((int)$ticket['telegram_id'], $text);
         } catch(Exception $e){}
         $_SESSION['flash_success']='پاسخ ارسال شد';
@@ -53,7 +53,7 @@ Database::query("UPDATE ticket_messages SET is_read=1 WHERE ticket_id=? AND send
           <div><?= nl2br(Helper::escapeHtml($m['message']??'')) ?></div>
           <?php if($m['file_path']): ?>
             <div class="mt-2">
-              <?php if(str_contains($m['file_type']??'','image')): ?><img src="<?= Helper::appUrl('public/'.$m['file_path']) ?>" style="max-width:200px;border-radius:8px;cursor:pointer" onclick="window.open(this.src)"><?php else: ?><a href="<?= Helper::appUrl('public/'.$m['file_path']) ?>" target="_blank" class="btn btn-sm btn-light">📎 دانلود فایل</a><?php endif; ?>
+              <?php if(str_contains($m['file_type']??'','image')): ?><img src="<?= Helper::appUrl('public/'.$m['file_path']) ?>" style="max-width:200px;border-radius:8px;cursor:pointer" onclick="window.open(this.src)"><?php else: ?><a href="<?= Helper::appUrl('public/'.$m['file_path']) ?>" target="_blank" class="btn btn-sm btn-light"><i class="bi bi-paperclip"></i> دانلود فایل</a><?php endif; ?>
             </div>
           <?php endif; ?>
           <div class="meta small opacity-75"><?= $m['sender_type']==='user'?'کاربر':'ادمین' ?> - <?= $m['created_at'] ?></div>
@@ -63,7 +63,7 @@ Database::query("UPDATE ticket_messages SET is_read=1 WHERE ticket_id=? AND send
     <form method="post" enctype="multipart/form-data" class="row g-2">
       <div class="col-12"><textarea name="message" rows="3" class="form-control" placeholder="پاسخ خود را بنویسید..."></textarea></div>
       <div class="col-md-6"><input type="file" name="file" class="form-control"></div>
-      <div class="col-md-6 text-end"><button class="btn btn-primary px-4">📤 ارسال پاسخ (به تلگرام کاربر)</button></div>
+      <div class="col-md-6 text-end"><button class="btn btn-primary px-4"><i class="bi bi-send"></i> ارسال پاسخ (به تلگرام کاربر)</button></div>
     </form>
   </div>
 </div>
