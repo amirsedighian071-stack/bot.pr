@@ -24,7 +24,7 @@ if(empty($groups)) $groups=Database::fetchAll("SELECT g.*, p.name as panel_name 
 $stocks=Database::fetchAll("SELECT w.*, g.name as group_name FROM warehouse_configs w LEFT JOIN config_groups g ON g.id=w.config_group_id ORDER BY w.id DESC LIMIT 100");
 ?>
 <div class="card mb-3">
-  <div class="card-header">📦 افزودن انبوه کانفیگ دستی</div>
+  <div class="card-header"><i class="bi bi-box-seam"></i> افزودن انبوه کانفیگ دستی</div>
   <div class="card-body">
     <form method="post" class="row g-3">
       <div class="col-md-4"><label class="form-label">گروه کانفیگ</label><select name="config_group_id" class="form-select" required><option value="">انتخاب</option><?php foreach($groups as $g): ?><option value="<?= $g['id'] ?>"><?= Helper::escapeHtml($g['name']) ?> (<?= Helper::escapeHtml($g['panel_name']??'') ?>)</option><?php endforeach; ?></select></div>

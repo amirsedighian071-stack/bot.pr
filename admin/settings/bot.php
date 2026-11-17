@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             $tg = new Telegram($token);
             $res = $tg->setWebhook($webhookUrl, $secret);
             if ($res && ($res['ok']??false)) {
-                $msg='✅ وب‌هوک با موفقیت ست شد: '.$webhookUrl;
+                $msg='<i class="bi bi-check-circle-fill text-success"></i> وب‌هوک با موفقیت ست شد: '.$webhookUrl;
                 // تست getMe
                 $me = $tg->request('getMe');
                 if ($me && ($me['ok']??false)) Config::setSetting('bot_username',$me['result']['username'] ?? '');
@@ -50,7 +50,7 @@ $info = $webhookInfo['result'] ?? null;
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card">
-      <div class="card-header">🤖 تنظیمات ربات تلگرام</div>
+      <div class="card-header"><i class="bi bi-robot"></i> تنظیمات ربات تلگرام</div>
       <div class="card-body">
         <form method="post">
           <div class="mb-3"><label class="form-label">توکن ربات (Bot Token)</label>
@@ -75,8 +75,8 @@ $info = $webhookInfo['result'] ?? null;
             <div class="form-text">حتماً باید HTTPS باشد و در هاست ابری قابل دسترس</div>
           </div>
           <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit" name="save">💾 ذخیره</button>
-            <button class="btn btn-success" type="submit" name="set_webhook" value="1">🚀 تنظیم خودکار وب‌هوک</button>
+            <button class="btn btn-primary" type="submit" name="save"><i class="bi bi-floppy"></i> ذخیره</button>
+            <button class="btn btn-success" type="submit" name="set_webhook" value="1"><i class="bi bi-rocket-takeoff"></i> تنظیم خودکار وب‌هوک</button>
           </div>
         </form>
       </div>
@@ -87,11 +87,11 @@ $info = $webhookInfo['result'] ?? null;
       <div class="card-header d-flex justify-content-between">وضعیت وب‌هوک <a href="?check=1" class="btn btn-sm btn-light">بروزرسانی</a></div>
       <div class="card-body small">
         <?php if($info): ?>
-          <div class="mb-2">🔗 URL: <code><?= $info['url'] ?? '-' ?></code></div>
-          <div class="mb-2">✅ Has custom certificate: <?= ($info['has_custom_certificate']?'بله':'خیر') ?></div>
-          <div class="mb-2">📨 Pending updates: <b><?= $info['pending_update_count'] ?? 0 ?></b></div>
-          <div class="mb-2">❗ Last error: <?= $info['last_error_message'] ?? 'ندارد' ?></div>
-          <div class="mb-2">📅 Last error date: <?= isset($info['last_error_date'])?date('Y-m-d H:i',$info['last_error_date']):'-' ?></div>
+          <div class="mb-2"><i class="bi bi-link-45deg"></i> URL: <code><?= $info['url'] ?? '-' ?></code></div>
+          <div class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Has custom certificate: <?= ($info['has_custom_certificate']?'بله':'خیر') ?></div>
+          <div class="mb-2"><i class="bi bi-envelope"></i> Pending updates: <b><?= $info['pending_update_count'] ?? 0 ?></b></div>
+          <div class="mb-2"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Last error: <?= $info['last_error_message'] ?? 'ندارد' ?></div>
+          <div class="mb-2"><i class="bi bi-calendar3"></i> Last error date: <?= isset($info['last_error_date'])?date('Y-m-d H:i',$info['last_error_date']):'-' ?></div>
           <form method="post" action="<?= Helper::appUrl('admin/api/webhook.php') ?>" class="mt-3 d-flex gap-2">
             <input type="hidden" name="action" value="delete">
             <button class="btn btn-sm btn-outline-danger" onclick="return confirm('حذف وب‌هوک؟')">حذف وب‌هوک</button>
@@ -114,4 +114,5 @@ $info = $webhookInfo['result'] ?? null;
     </div>
   </div>
 </div>
+<?php include __DIR__ . '/../layout/creator_card.php'; ?>
 <?php require_once __DIR__ . '/../layout/footer.php'; ?>

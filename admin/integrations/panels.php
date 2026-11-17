@@ -77,7 +77,7 @@ $edit = null;
 if (isset($_GET['edit'])) $edit = Database::fetchOne("SELECT * FROM panels WHERE id=?", [(int)$_GET['edit']]);
 ?>
 <div class="card mb-3">
-  <div class="card-header d-flex justify-content-between"><span><?= $edit?'✏️ ویرایش پنل':'➕ افزودن پنل جدید' ?></span> <?php if($edit): ?><a href="panels.php" class="btn btn-sm btn-light">جدید</a><?php endif; ?></div>
+  <div class="card-header d-flex justify-content-between"><span><?= $edit?'<i class="bi bi-pencil"></i> ویرایش پنل':'<i class="bi bi-plus-circle"></i> افزودن پنل جدید' ?></span> <?php if($edit): ?><a href="panels.php" class="btn btn-sm btn-light">جدید</a><?php endif; ?></div>
   <div class="card-body">
     <form method="post" class="row g-3">
       <input type="hidden" name="id" value="<?= $edit['id']??0 ?>">
