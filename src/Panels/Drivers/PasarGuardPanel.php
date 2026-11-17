@@ -233,9 +233,39 @@ class PasarGuardPanel extends AbstractPanel {
 
     public function createUser(string $username, int $dataLimitBytes, int $expireTimestamp, $groupOrInboundIds = null): array {
         if (!$this->authenticate()) return ['success'=>false,'message'=>'احراز هویت پاسارگاد ناموفق','subscription_url'=>'','uuid'=>''];
-        // کپی دقیق payload فاکسیما: pasarguardAddUser
-        $panelProxies = $this->config['proxies'] ?? null;
-        $proxies = $panelProxies ? json_decode($panelProxies, true) : null;
+        // کپی دقیق payload فاکسیما: pasarguardAddUser — با محافظت نوع داده proxy_settings
+        // فاکسیما: json_decode($panel['proxies']) — اگر خالی/نامعتبر باشد، باید fallback به object معتبر داد وگرنه پنل خطای
+        // "proxy_settings should be a valid dictionary or object" می‌دهد (Pydantic validation).
+        $panelProxies = $this->config['proxies'] ?? $this->config['proxies_json'] ?? null;
+        $proxies = null;
+        if (is_string($panelProxies) && trim($panelProxies) !== '' && strtolower(trim($panelProxies)) !== 'null') {
+            $decoded = json_decode(trim($panelProxies), true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && !empty($decoded)) {
+                // هر مقدار داخلی باید object باشد؛ آرایه خالی → stdClass
+                foreach ($decoded as $k => $v) {
+                    if (is_array($v) && empty($v)) $decoded[$k] = new \stdClass();
+                    elseif ($v === null || $v === '' || $v === 'Input') $decoded[$k] = new \stdClass();
+                }
+                $proxies = $decoded;
+            }
+        } elseif (is_array($panelProxies) && !empty($panelProxies)) {
+            $proxies = $panelProxies;
+            foreach ($proxies as $k => $v) {
+                if (is_array($v) && empty($v)) $proxies[$k] = new \stdClass();
+                elseif ($v === null || $v === '' || $v === 'Input') $proxies[$k] = new \stdClass();
+            }
+        }
+        // fallback استاندارد: اگر پروکسی تنظیم نشده، یک dict معتبر خالی یا با پروتکل‌های پیش‌فرض بفرست
+        // نه null، نه رشته "Input"، نه [] — باید object/dictionary باشد.
+        if (!is_array($proxies) || empty($proxies)) {
+            // سعی کن از پنل زنده پروکسی‌های واقعی را بخوانی؟ اگر نشد، پیش‌فرض امن بفرست
+            $proxies = [
+                'vless' => new \stdClass(),
+                'vmess' => new \stdClass(),
+                'trojan' => new \stdClass(),
+                'shadowsocks' => new \stdClass(),
+            ];
+        }
         $data = [
             "proxy_settings" => $proxies,
             "data_limit" => $dataLimitBytes,
