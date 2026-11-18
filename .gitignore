@@ -7,3 +7,7 @@
 .env
 install/done.lock
 *.sql.gz
+
+# React frontend
+frontend/node_modules/
+frontend/.vite/
