@@ -6,7 +6,7 @@ const data = [{m:'فروردین',v:42000000},{m:'اردیبهشت',v:58000000},
 
 export default function Reports(){
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">گزارش مالی</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[{k:'درآمد امروز',v:'12,400,000 ت'},{k:'درآمد ماه',v:'342,000,000 ت'},{k:'میانگین سبد',v:'92,400 ت'}].map(s=>(

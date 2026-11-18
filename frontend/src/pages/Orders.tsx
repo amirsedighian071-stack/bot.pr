@@ -1,4 +1,4 @@
-import { Card, CardHeader, Badge, Button, Input } from '../components/ui'
+import {Card, CardHeader, Badge, Button, Input, TableWrap} from '../components/ui'
 import { Search, RefreshCw, Eye, Copy, QrCode, Filter } from 'lucide-react'
 import { useState } from 'react'
 
@@ -27,7 +27,7 @@ export default function Orders() {
   })
 
   return (
-    <div className="space-y-4">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black text-white">سفارش‌ها</h1>
@@ -65,8 +65,8 @@ export default function Orders() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <TableWrap>
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-white/[0.04] text-xs font-bold tracking-wide text-zinc-400">
               <tr>
                 <th className="px-4 py-3 text-right">سفارش</th>
@@ -103,8 +103,7 @@ export default function Orders() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </table></TableWrap>
 
         <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3 text-xs text-zinc-500">
           <span>نمایش {filtered.length} از {orders.length} سفارش</span>

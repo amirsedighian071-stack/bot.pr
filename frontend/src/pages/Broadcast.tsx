@@ -3,7 +3,7 @@ import { Megaphone, Send, Image as ImgIcon } from 'lucide-react'
 
 export default function Broadcast(){
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="w-full min-w-0 max-w-3xl space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">پیام همگانی</h1>
       <Card className="p-5 space-y-4">
         <div className="flex items-center gap-2 text-sm font-black text-white"><Megaphone className="h-4 w-4 text-violet-400"/> ارسال به همه کاربران</div>

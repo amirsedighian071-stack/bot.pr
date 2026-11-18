@@ -1,4 +1,4 @@
-import { Card, Badge, Button, Input } from '../components/ui'
+import {Card, Badge, Button, Input, TableWrap} from '../components/ui'
 import { Search, Ban, Coins, Gift, Shield, UserPlus } from 'lucide-react'
 
 const users = [
@@ -9,7 +9,7 @@ const users = [
 
 export default function Users() {
   return (
-    <div className="space-y-4">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black text-white">کاربران</h1>
@@ -43,8 +43,8 @@ export default function Users() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <TableWrap>
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-white/[0.04] text-xs font-bold text-zinc-400">
               <tr>
                 <th className="px-4 py-3 text-right">کاربر</th>
@@ -80,8 +80,7 @@ export default function Users() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </table></TableWrap>
       </Card>
     </div>
   )

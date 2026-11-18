@@ -2,7 +2,7 @@ import { Card, Button, Badge } from '../components/ui'
 import { Database, Download, Upload, Clock } from 'lucide-react'
 export default function Backups(){
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="w-full min-w-0 max-w-3xl space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">بکاپ & بازیابی</h1>
       <Card className="p-5">
         <div className="flex items-center gap-2 font-black text-white"><Database className="h-4 w-4 text-violet-400"/> بکاپ دیتابیس</div>
