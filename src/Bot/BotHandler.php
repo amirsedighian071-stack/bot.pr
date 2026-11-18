@@ -516,13 +516,28 @@ class BotHandler {
         $group = $groupId ? Database::fetchOne("SELECT * FROM config_groups WHERE id=?", [$groupId]) : Database::fetchOne("SELECT * FROM config_groups WHERE is_active=1 LIMIT 1");
         if (!$group) { $this->tg->sendMessage($this->chatId,"❌ گروه تست تنظیم نشده. با پشتیبانی تماس بگیرید.",Keyboards::backToMain()); return; }
         $panelRow = Database::fetchOne("SELECT * FROM panels WHERE id=?", [$group['panel_id']]);
+        // اعتبارسنجی Group ID برای تست — نباید خالی باشد وگرنه سابسکرایب خالی (AVANET 0) می‌شود
+        $trialInbound = $group['inbound_ids'] ?: $group['group_identifier'];
+        if (empty($trialInbound)) {
+            // fallback از capabilities_json پنل
+            $caps = $panelRow['capabilities_json'] ?? null;
+            if ($caps) {
+                $dec = is_string($caps) ? json_decode($caps, true) : $caps;
+                if (is_array($dec) && !empty($dec) && isset($dec[0]['id'])) $trialInbound = (string)$dec[0]['id'];
+            }
+        }
+        if (empty($trialInbound)) {
+            $this->tg->sendMessage($this->chatId,"❌ تنظیمات تست رایگان: گروه پنل برای گروه «{$group['name']}» خالی است. لطفاً در مدیریت → گروه‌های کانفیگ، فیلد Inbound/Group IDs را با شناسه گروه پنل (مثل Ava test) پر کنید یا در تنظیمات عمومی گروه دیگری انتخاب کنید.",Keyboards::backToMain());
+            Helper::log("Trial group {$group['id']} has no inbound_ids for panel {$panelRow['name']}", 'panels.log');
+            return;
+        }
         $username = 'Test'.$this->fromId.'_'.rand(100,999);
         $volMb = (int)Config::setting('trial_volume_mb','100');
         $days = (int)Config::setting('trial_days','1');
         $bytes = $volMb * 1024 * 1024;
         $expire = time()+$days*86400;
         $driver = \Panels\PanelFactory::create($panelRow);
-        $res = $driver->createUser($username, $bytes, $expire, $group['inbound_ids']?:$group['group_identifier']);
+        $res = $driver->createUser($username, $bytes, $expire, $trialInbound);
         if ($res['success']) {
             // نرمال‌سازی لینک به URL مطلق — پنل گاهی فقط /sub/xxx برمی‌گرداند که در تلگرام غیرقابل کلیک است (باگ تصویر)
             $panelBase = $panelRow['url'] ?? '';

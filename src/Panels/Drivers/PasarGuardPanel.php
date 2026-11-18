@@ -273,30 +273,55 @@ class PasarGuardPanel extends AbstractPanel {
             "note" => "",
             "data_limit_reset_strategy" => "no_reset"
         ];
-        // group_ids handling
+        // group_ids handling — حیاتی برای Outbound Center / PasarGuard: اگر group_ids خالی بماند، سابسکرایب خالی (AVANET 0) می‌شود
+        // $groupOrInboundIds از UnifiedPanelManager (plans.group_ids > config_groups.inbound_ids) می‌آید و هرگز نباید خالی باشد
         $inbounds = $groupOrInboundIds;
         if ($inbounds === null && !empty($this->config['inbounds'])) {
-            $inbounds = json_decode($this->config['inbounds'], true);
+            $decoded = json_decode($this->config['inbounds'], true);
+            $inbounds = (json_last_error()===JSON_ERROR_NONE && $decoded!==null) ? $decoded : $this->config['inbounds'];
         }
-        if ($inbounds !== null && $inbounds !== "null" && $inbounds !== "") {
-            if (is_string($inbounds) && strpos($inbounds, ',') !== false) $inbounds = explode(',', $inbounds);
+        // نرمال‌سازی: JSON "[1,2]", CSV "1, 2", عدد، یا آرایه
+        if (is_string($inbounds)) {
+            $t = trim($inbounds);
+            if ($t==='' || strtolower($t)==='null') {
+                $inbounds = null;
+            } else {
+                $jd = json_decode($t, true);
+                if (json_last_error()===JSON_ERROR_NONE && is_array($jd)) $inbounds = $jd;
+                elseif (strpos($t, ',')!==false) $inbounds = array_map('trim', explode(',', $t));
+                else $inbounds = [$t];
+            }
+        }
+        if ($inbounds !== null) {
             if (!is_array($inbounds)) $inbounds = [$inbounds];
-            $gids = array_values(array_map('intval', (array)$inbounds));
-            // مرج با گروه‌های فعلی اگر کاربر وجود دارد (مانند فاکسیما)
+            // حذف خالی‌ها و تبدیل به int
+            $gids = array_values(array_filter(array_map(function($v){
+                $v = is_string($v) ? trim($v) : $v;
+                if ($v===''|| $v===null || strtolower((string)$v)==='null') return null;
+                return (int)$v;
+            }, (array)$inbounds), function($v){ return $v!==null && $v!==0; }));
+            // اگر بعد فیلتر خالی شد، خطا بده (نه ارسال بدون گروه)
+            if (empty($gids)) {
+                Helper::log("PasarGuard createUser '$username' بدون group_ids — ارسال ناقص لغو شد (inbounds=".json_encode($groupOrInboundIds, JSON_UNESCAPED_UNICODE).")", 'panels.log');
+                return ['success'=>false,'message'=>'گروه پنل (group_ids) خالی است — در مدیریت → پلن‌ها یا گروه‌های کانفیگ، Group ID (مثلاً Ava test) را تنظیم کنید. بدون آن لینک ساب خالی می‌ماند.','subscription_url'=>'','uuid'=>''];
+            }
+            // مرج با گروه‌های فعلی اگر کاربر وجود دارد (مانند فاکسیما) — فقط اگر کاربر واقعاً وجود داشته باشد
             $existing = $this->pasarguardRequest('GET', '/api/user/'.$username);
             $sc = (int)($existing['status'] ?? 0);
             if ($sc === 200) {
                 $j = json_decode($existing['body'] ?? '', true);
                 $cur = is_array($j) ? ($j['group_ids'] ?? null) : null;
                 if (is_array($cur) && !empty($cur)) $gids = array_values(array_unique(array_merge(array_map('intval',$cur), $gids)));
-            } elseif ($sc !== 404) {
-                // خطای شبکه - بدون group_ids درخواست بده
-                unset($gids);
-                $data_req = $data;
-                $resp = $this->pasarguardRequest('POST', '/api/user', $data_req);
-                goto handle_create;
+            } elseif ($sc !== 404 && $sc !== 0) {
+                Helper::log("PasarGuard GET /api/user/$username status $sc body=".substr((string)($existing['body']??''),0,500), 'panels.log');
+                // به‌جای ارسال بدون گروه (اوتی که باعث AVANET 0 می‌شود)، خطا برگردان
+                return ['success'=>false,'message'=>'خطا بررسی کاربر در پنل (HTTP '.$sc.'): '.substr((string)($existing['body']??$existing['error']??''),0,300),'subscription_url'=>'','uuid'=>''];
             }
             $data['group_ids'] = $gids;
+        } else {
+            // هیچ group_ids نداریم — هرگز بدون گروه نساز
+            Helper::log("PasarGuard createUser '$username' — inboundIds null/empty (raw=".json_encode($groupOrInboundIds, JSON_UNESCAPED_UNICODE).")", 'panels.log');
+            return ['success'=>false,'message'=>'گروه پنل (group_ids) برای این کاربر تنظیم نشده — مدیر باید در پلن/گروه، شناسه گروه پنل (مثل Ava test) را پر کند.','subscription_url'=>'','uuid'=>''];
         }
         // expire / on_hold مانند فاکسیما
         // در bot.pr ستون conecton/on_hold_test نداریم - ساده: expire مستقیم
@@ -304,7 +329,6 @@ class PasarGuardPanel extends AbstractPanel {
         // اگر پنل on_hold فعال باشد، فاکسیما expire=0 و on_hold_expire_duration میگذارد - ما برای سازگاری همان expire را میگذاریم
 
         $resp = $this->pasarguardRequest('POST', '/api/user', $data);
-        handle_create:
         $body = $resp['body'] ?? '';
         $code = (int)($resp['status'] ?? 0);
         $err = $resp['error'] ?? '';

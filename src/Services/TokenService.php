@@ -72,17 +72,32 @@ class TokenService {
 
             $volume = $giftType==='5gb'?5:10;
             $username = 'gift_' . $telegramId . '_' . time();
-            // استفاده از اولین پلن متصل به گروه یا ساخت مستقیم
+            // استفاده از اولین پلن متصل به گروه یا ساخت مستقیم — با رعایت group_ids
             $plan = Database::fetchOne("SELECT * FROM plans WHERE config_group_id=? LIMIT 1", [$group['id']]);
             $panelId = $group['panel_id'];
-            // مستقیم via UnifiedPanelManager
-            $res = \Panels\UnifiedPanelManager::createFromPlan($plan['id'] ?? 0, $username, $volume, 30);
-            // اگر پلن نداشت، سعی مستقیم driver
+            $panelRowTmp = Database::fetchOne("SELECT * FROM panels WHERE id=?", [$panelId]);
+            // محاسبه inbound برای fallback مستقیم
+            $giftInbound = null;
+            if ($plan && !empty($plan['group_ids'])) $giftInbound = $plan['group_ids'];
+            else $giftInbound = $group['inbound_ids'] ?: $group['group_identifier'];
+            if (empty($giftInbound) && $panelRowTmp && !empty($panelRowTmp['capabilities_json'])) {
+                $caps = is_string($panelRowTmp['capabilities_json']) ? json_decode($panelRowTmp['capabilities_json'], true) : $panelRowTmp['capabilities_json'];
+                if (is_array($caps) && !empty($caps) && isset($caps[0]['id'])) $giftInbound = (string)$caps[0]['id'];
+            }
+            if ($plan) {
+                $res = \Panels\UnifiedPanelManager::createFromPlan((int)$plan['id'], $username, $volume, 30);
+            } else {
+                $res = ['success'=>false,'message'=>'no plan'];
+            }
+            // اگر پلن نداشت یا ناموفق بود، سعی مستقیم driver با inbound محاسبه‌شده
             if (!$res['success'] && !$plan) {
-                $panelRow = Database::fetchOne("SELECT * FROM panels WHERE id=?", [$panelId]);
-                $driver = \Panels\PanelFactory::create($panelRow);
-                $res = $driver->createUser($username, \Core\Helper::gbToBytes($volume), time()+30*86400, $group['inbound_ids']);
-                $res['panel_id']=$panelId;
+                if (empty($giftInbound)) {
+                    $res = ['success'=>false,'message'=>'گروه پنل برای هدیه تنظیم نشده — در تنظیمات، گروه جوایز را با Group ID پر کنید.','subscription_url'=>''];
+                } else {
+                    $driver = \Panels\PanelFactory::create($panelRowTmp);
+                    $res = $driver->createUser($username, \Core\Helper::gbToBytes($volume), time()+30*86400, $giftInbound);
+                    $res['panel_id']=$panelId;
+                }
             }
             if ($res['success']) {
                 Database::query("INSERT INTO subscriptions (user_id, telegram_id, order_id, panel_id, config_group_id, username, uuid, subscription_url, data_limit_bytes, expire_at, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
