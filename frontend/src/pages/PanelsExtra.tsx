@@ -1,7 +1,7 @@
 import { Card, Badge } from '../components/ui'
 export function Placeholder({ title }: { title: string }) {
   return (
-    <div className="space-y-4">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">{title}</h1>
       <Card className="p-8">
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-center">

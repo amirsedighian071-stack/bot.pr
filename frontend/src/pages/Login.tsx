@@ -5,7 +5,7 @@ import { Button, Input, Label } from '../components/ui'
 export default function Login(){
   const [loading,setLoading]=useState(false)
   return (
-    <div className="min-h-screen grid place-items-center bg-[#050507] p-4 relative overflow-hidden">
+    <div className="min-h-screen grid place-items-center bg-[#050507] p-4 relative overflow-hidden min-w-0 overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(124,58,237,0.10),transparent_50%)]" />
       <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-violet-600/20 blur-[80px]" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-600/15 blur-[80px]" />

@@ -3,7 +3,7 @@ import { Bot, Globe, Shield, Link2, Copy, Rocket } from 'lucide-react'
 
 export default function SettingsBot(){
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="w-full min-w-0 max-w-4xl space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">تنظیمات ربات & وب‌هوک</h1>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="p-5">

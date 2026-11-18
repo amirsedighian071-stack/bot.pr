@@ -2,7 +2,7 @@ import { Card, Button, Badge, Input, Label } from '../components/ui'
 import { Database, Plus, Pencil, Trash2 } from 'lucide-react'
 export default function Volumes(){
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="w-full min-w-0 max-w-2xl space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">حجم‌های پیش‌فرض</h1>
       <Card className="p-5">
         <div className="font-black text-white">افزودن حجم</div>

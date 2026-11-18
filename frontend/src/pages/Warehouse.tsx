@@ -2,7 +2,7 @@ import { Card, Button, Badge, Textarea, Label, Select } from '../components/ui'
 import { Archive, Plus } from 'lucide-react'
 export default function Warehouse(){
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <h1 className="text-xl font-black text-white">انبار دستی</h1>
       <Card className="p-5">
         <div className="font-black text-white flex items-center gap-2"><Archive className="h-4 w-4 text-amber-400"/> افزودن کانفیگ دستی</div>

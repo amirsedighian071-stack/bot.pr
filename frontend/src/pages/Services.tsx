@@ -3,7 +3,7 @@ import { Layers, Plus, Pencil, Trash2 } from 'lucide-react'
 
 export default function Services(){
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <div className="flex items-center justify-between"><div><h1 className="text-xl font-black text-white">سرویس‌ها</h1><p className="text-sm text-zinc-500">دسته‌بندی کلی سرویس‌ها (Ava , EU , ...)</p></div><Button className="gap-2"><Plus className="h-4 w-4"/> سرویس جدید</Button></div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="p-5">

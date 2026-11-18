@@ -1,4 +1,4 @@
-import { Card, Badge, Button, Input } from '../components/ui'
+import {Card, Badge, Button, Input, TableWrap} from '../components/ui'
 import { Search, Copy, QrCode, Power, Trash2 } from 'lucide-react'
 
 const subs = [
@@ -8,11 +8,11 @@ const subs = [
 
 export default function Subscriptions(){
   return (
-    <div className="space-y-4">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <div className="flex items-center justify-between"><div><h1 className="text-xl font-black text-white">اشتراک‌ها</h1><p className="text-sm text-zinc-500">مدیریت لینک‌ها، تمدید و نمایش QR</p></div><div className="relative"><Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"/><Input placeholder="یوزرنیم یا آیدی" className="pr-9 w-64"/></div></div>
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <TableWrap>
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-white/[0.04] text-xs font-bold text-zinc-400"><tr><th className="px-4 py-3 text-right">#</th><th className="px-4 py-3 text-right">کاربر</th><th className="px-4 py-3 text-right">یوزرنیم</th><th className="px-4 py-3 text-right">پنل</th><th className="px-4 py-3 text-right">حجم</th><th className="px-4 py-3 text-right">انقضا</th><th className="px-4 py-3 text-right">وضعیت</th><th className="px-4 py-3 text-right">لینک</th><th className="px-4 py-3 text-right">عملیات</th></tr></thead>
             <tbody className="divide-y divide-white/[0.06]">
               {subs.map(s=>(
@@ -29,8 +29,7 @@ export default function Subscriptions(){
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </table></TableWrap>
       </Card>
     </div>
   )

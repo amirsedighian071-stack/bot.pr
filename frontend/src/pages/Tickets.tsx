@@ -3,7 +3,7 @@ import { MessageCircle, Gift, Clock, Check, X } from 'lucide-react'
 
 export default function Tickets(){
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <div className="flex items-center justify-between"><div><h1 className="text-xl font-black text-white">تیکت‌ها & هدایا</h1><p className="text-sm text-zinc-500">پشتیبانی کاربران و درخواست‌های هدیه نقدی/توکن</p></div><div className="flex gap-2"><Badge tone="red">12 باز</Badge><Badge tone="emerald">4 هدیه در انتظار</Badge></div></div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
